@@ -1,0 +1,55 @@
+import Link from 'next/link';
+
+const REVIEWS = [
+  { name: 'Jessica M.', location: 'Cape Coral, FL', rating: 5, text: "Absolutely amazing experience! The Tiki Tsunami was a hit at my son's birthday party. Setup crew was professional and on time. Will definitely book again!" },
+  { name: 'Carlos R.', location: 'Lehigh Acres, FL', rating: 5, text: "Best party rental company in Southwest Florida. The Shark Attack Slide was incredible — kids wouldn't get off it. Super clean and the delivery team was great." },
+  { name: 'Amanda T.', location: 'Fort Myers, FL', rating: 5, text: "Easy online booking, great communication, and the slide was exactly as pictured. The weather guarantee gave us so much peace of mind. 10/10!" },
+  { name: 'Mike D.', location: 'Cape Coral, FL', rating: 5, text: "Rented the Yeti's Peak for a neighborhood block party. Everyone loved it. Sunny Slide made the whole process stress-free from start to finish." },
+  { name: 'Sandra L.', location: 'North Fort Myers, FL', rating: 5, text: "We added the tables and chairs package — everything was included and set up perfectly. Highly recommend Sunny Slide Rentals for any party!" },
+  { name: 'Roberto G.', location: 'Buckingham, FL', rating: 5, text: "Fantastic service. Booked online at midnight, got a confirmation the next morning, and the team showed up right on time. The kids are still talking about it." },
+];
+
+export default function ReviewsPage() {
+  return (
+    <main className="bg-gray-50 min-h-screen">
+      <section className="bg-[#0d2340] py-16 px-4 text-center">
+        <p className="text-[#f5a623] font-bold text-xs uppercase tracking-widest mb-3">Happy Customers</p>
+        <h1 className="text-4xl sm:text-5xl font-extrabold text-white mb-4">Customer Reviews</h1>
+        <div className="flex items-center justify-center gap-1 mb-3">
+          {[1,2,3,4,5].map((i) => <span key={i} className="text-[#f5a623] text-2xl">★</span>)}
+        </div>
+        <p className="text-white/70">5.0 · Loved by families across Southwest Florida</p>
+      </section>
+
+      <div className="max-w-5xl mx-auto px-4 py-14">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-12">
+          {REVIEWS.map((review) => (
+            <div key={review.name} className="bg-white rounded-2xl shadow-sm p-6 flex flex-col gap-4">
+              <div className="flex gap-0.5">
+                {Array.from({ length: review.rating }).map((_, i) => (
+                  <span key={i} className="text-[#f5a623] text-lg">★</span>
+                ))}
+              </div>
+              <p className="text-gray-600 text-sm leading-relaxed flex-1">&quot;{review.text}&quot;</p>
+              <div>
+                <p className="font-bold text-[#0d2340] text-sm">{review.name}</p>
+                <p className="text-gray-400 text-xs">{review.location}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
+          <p className="text-2xl font-extrabold text-[#0d2340] mb-3">Ready to make your own memories?</p>
+          <p className="text-gray-500 mb-6">Join hundreds of happy families across Southwest Florida.</p>
+          <Link
+            href="/rentals"
+            className="inline-block bg-[#f5a623] hover:bg-[#e09610] text-white font-bold px-10 py-4 rounded-xl text-lg transition-colors shadow-lg"
+          >
+            📅 Book Your Rental Today
+          </Link>
+        </div>
+      </div>
+    </main>
+  );
+}
