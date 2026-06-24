@@ -37,7 +37,7 @@ export default function ServiceAreasPage() {
             Based in Buckingham, FL — we deliver within a 20-mile radius to Cape Coral, Lehigh Acres, Fort Myers and beyond.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
-            <a href="sms:+12392314477" className="bg-[#f5a623] hover:bg-[#e09610] text-white font-black px-6 py-3 rounded-xl transition-all hover:scale-105 shadow-xl">
+            <a href="sms:+12392204067" className="bg-[#f5a623] hover:bg-[#e09610] text-white font-black px-6 py-3 rounded-xl transition-all hover:scale-105 shadow-xl">
               📱 Text to Check Your Address
             </a>
             <Link href="/rentals" className="bg-white/10 backdrop-blur border border-white/20 text-white hover:bg-white/20 font-bold px-6 py-3 rounded-xl transition-all">
@@ -93,10 +93,10 @@ export default function ServiceAreasPage() {
             <h3 className="text-2xl sm:text-3xl font-black mb-3">Not Sure If We Reach You?</h3>
             <p className="text-white/70 mb-6 text-lg">Just text us your address — we&apos;ll reply within minutes!</p>
             <a
-              href="sms:+12392314477"
+              href="sms:+12392204067"
               className="inline-block bg-[#f5a623] hover:bg-[#e09610] text-white font-black px-8 py-4 rounded-2xl text-lg transition-all hover:scale-105 shadow-xl"
             >
-              📱 Text (239) 231-4477
+              📱 Text (239) 220-4067
             </a>
           </div>
         </div>

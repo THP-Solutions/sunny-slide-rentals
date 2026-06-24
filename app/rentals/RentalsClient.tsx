@@ -68,12 +68,12 @@ export default function RentalsClient() {
                 key={rental.id}
                 className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-shadow overflow-hidden group"
               >
-                <div className="relative h-52 overflow-hidden">
+                <div className="relative h-52 bg-sky-50">
                   <Image
                     src={rental.image}
                     alt={rental.name}
                     fill
-                    className="object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                    className="object-contain group-hover:scale-105 transition-transform duration-300 p-1"
                   />
                   <div className="absolute top-3 left-3">
                     <span className="bg-[#f5a623] text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase shadow">

@@ -89,7 +89,7 @@ export default function Footer() {
             <ul className="space-y-3 mb-5">
               <li>
                 <a
-                  href="sms:+12392314477"
+                  href="sms:+12392204067"
                   className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
                 >
                   <span>📱</span> Text Us

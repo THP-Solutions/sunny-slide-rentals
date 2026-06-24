@@ -28,10 +28,10 @@ export default function ContactPage() {
               </div>
             </div>
             <a
-              href="sms:+12392314477"
+              href="sms:+12392204067"
               className="block w-full text-center bg-[#f5a623] hover:bg-[#e09610] text-white font-bold py-3 rounded-xl transition-colors"
             >
-              Text (239) 231-4477
+              Text (239) 220-4067
             </a>
           </div>
 

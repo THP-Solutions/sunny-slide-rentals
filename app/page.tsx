@@ -152,7 +152,7 @@ export default function HomePage() {
           <h2 className="text-4xl font-black text-[#0d2340] mb-4">Delivery Areas</h2>
           <p className="text-gray-500 text-lg mb-8 max-w-xl mx-auto">
             Serving all of Southwest Florida within a 20-mile radius. Not sure if we reach you?{' '}
-            <a href="sms:+12392314477" className="text-[#1a6fa8] font-bold hover:underline">Text us!</a>
+            <a href="sms:+12392204067" className="text-[#1a6fa8] font-bold hover:underline">Text us!</a>
           </p>
           <div className="flex flex-wrap justify-center gap-3 mb-4">
             {SERVICE_AREAS.map((area) => (
@@ -181,7 +181,7 @@ export default function HomePage() {
             <Link href="/rentals" className="bg-[#f5a623] hover:bg-[#e09610] text-white font-black px-12 py-5 rounded-2xl text-xl transition-all shadow-2xl hover:scale-105">
               📅 Book Online Now
             </Link>
-            <a href="sms:+12392314477" className="border-2 border-white/30 text-white hover:bg-white/10 font-bold px-10 py-5 rounded-2xl text-xl transition-all">
+            <a href="sms:+12392204067" className="border-2 border-white/30 text-white hover:bg-white/10 font-bold px-10 py-5 rounded-2xl text-xl transition-all">
               📱 Text Us
             </a>
           </div>

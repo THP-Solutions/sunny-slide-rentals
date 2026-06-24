@@ -42,7 +42,7 @@ export default function ContactForm() {
         <h3 className="text-xl font-extrabold text-[#0d2340] mb-2">Message Sent!</h3>
         <p className="text-gray-500 text-sm leading-relaxed">
           Thanks! Our team will reach out within a few hours — usually much faster. 
-          Watch for a text from <span className="font-semibold text-[#1a6fa8]">(239) 231-4477</span>.
+          Watch for a text from <span className="font-semibold text-[#1a6fa8]">(239) 220-4067</span>.
         </p>
         <button
           onClick={() => setStatus('idle')}
@@ -149,7 +149,7 @@ export default function ContactForm() {
       </div>
 
       {status === 'error' && (
-        <p className="text-red-500 text-sm text-center">Something went wrong. Please try texting us at (239) 231-4477.</p>
+        <p className="text-red-500 text-sm text-center">Something went wrong. Please try texting us at (239) 220-4067.</p>
       )}
 
       <button
@@ -162,7 +162,7 @@ export default function ContactForm() {
 
       <p className="text-xs text-gray-400 text-center">
         Prefer faster? Text us directly at{' '}
-        <a href="sms:+12392314477" className="text-[#1a6fa8] font-semibold">(239) 231-4477</a>
+        <a href="sms:+12392204067" className="text-[#1a6fa8] font-semibold">(239) 220-4067</a>
       </p>
     </form>
   )

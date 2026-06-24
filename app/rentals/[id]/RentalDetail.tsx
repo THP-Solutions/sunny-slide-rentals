@@ -168,7 +168,7 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
     } catch (err) {
       console.error('Checkout error:', err);
       const msg = err instanceof Error ? err.message : 'Something went wrong.';
-      alert(msg + (msg.includes('text') ? '' : ' Please text us at (239) 231-4477.'));
+      alert(msg + (msg.includes('text') ? '' : ' Please text us at (239) 220-4067.'));
       setIsCheckingOut(false);
     }
   };
@@ -500,7 +500,7 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                 📅 Pick Your Date →
               </button>
               <a
-                href="sms:+12392314477"
+                href="sms:+12392204067"
                 className="block w-full text-center border border-white/30 text-white/80 hover:bg-white/10 font-semibold py-2.5 rounded-xl transition-colors text-sm"
               >
                 💬 Text Us Instead

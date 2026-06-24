@@ -24,10 +24,10 @@ export default function BookingConfirmedPage() {
             <div>
               <p className="font-bold text-[#0d2340] text-sm">Questions? Text us anytime</p>
               <a
-                href="sms:+12392314477"
+                href="sms:+12392204067"
                 className="text-[#1a6fa8] font-semibold text-sm hover:underline"
               >
-                (239) 231-4477
+                (239) 220-4067
               </a>
             </div>
           </div>
@@ -60,7 +60,7 @@ export default function BookingConfirmedPage() {
             Browse More Rentals
           </Link>
           <a
-            href="sms:+12392314477"
+            href="sms:+12392204067"
             className="border-2 border-[#1a6fa8] text-[#1a6fa8] hover:bg-blue-50 font-bold px-8 py-3.5 rounded-xl transition-colors"
           >
             Text Us

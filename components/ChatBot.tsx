@@ -117,7 +117,7 @@ const QAs: QA[] = [
   },
   {
     patterns: ['contact', 'phone', 'call', 'email', 'reach', 'talk', 'speak', 'number', 'human', 'person'],
-    reply: () => "Text us right now for the fastest answer — (239) 231-4477. Real people, real fast replies. Or let me grab your info and have someone reach out to YOU. Which works better?",
+    reply: () => "Text us right now for the fastest answer — (239) 220-4067. Real people, real fast replies. Or let me grab your info and have someone reach out to YOU. Which works better?",
     link: { label: 'Contact Page →', href: '/contact' },
     buyingIntent: true,
   },
@@ -131,6 +131,14 @@ const QAs: QA[] = [
     link: { label: 'Book Now →', href: '/rentals' },
     buyingIntent: true,
   },
+  {
+    patterns: ['year', 'old', 'age', ' yr', 'toddler', 'teen', 'adult',
+               '1 ', '2 ', '3 ', '4 ', '5 ', '6 ', '7 ', '8 ', '9 ',
+               '10', '11', '12', '13', '14', '15', '16', '17', '18'],
+    reply: () => "Perfect — that age group will absolutely love our water slides! Kids 6–15 go WILD on the Tiki Tsunami or Shark Attack. For the little ones under 6, our Combo units are ideal. Want me to show you the best match?",
+    link: { label: 'Find the Right Rental →', href: '/rentals' },
+    buyingIntent: true,
+  },
 ]
 
 function getBotReply(input: string): QA {
@@ -142,7 +150,6 @@ function getBotReply(input: string): QA {
     patterns: [],
     reply: () => "That's a great question — and the honest answer is our team can nail it faster than I can. Let me get you connected. What's your name and best phone number?",
     link: { label: 'Or browse rentals →', href: '/rentals' },
-    buyingIntent: true,
   }
 }
 

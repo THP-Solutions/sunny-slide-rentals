@@ -148,7 +148,7 @@ export default function HeroChannels() {
           <Link href="/rentals" className="bg-[#f5a623] hover:bg-[#e09610] text-white font-black px-8 py-4 rounded-2xl text-base transition-all shadow-2xl hover:scale-105 text-center">
             {ch.cta}
           </Link>
-          <a href="sms:+12392314477" className="bg-white/10 border-2 border-white/30 text-white hover:bg-white/20 font-bold px-8 py-4 rounded-2xl text-base transition-all text-center">
+          <a href="sms:+12392204067" className="bg-white/10 border-2 border-white/30 text-white hover:bg-white/20 font-bold px-8 py-4 rounded-2xl text-base transition-all text-center">
             📱 Text Us
           </a>
         </div>

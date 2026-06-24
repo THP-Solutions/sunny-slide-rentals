@@ -113,7 +113,7 @@ export default function FAQClient() {
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <a
-              href="sms:+12392314477"
+              href="sms:+12392204067"
               className="bg-[#f5a623] hover:bg-[#e09610] text-white font-bold px-7 py-3 rounded-xl transition-colors"
             >
               📱 Text Us
