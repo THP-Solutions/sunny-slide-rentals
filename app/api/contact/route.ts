@@ -20,11 +20,12 @@ async function createGHLContact(fields: {
     return
   }
   try {
-    const res = await fetch('https://rest.gohighlevel.com/v1/contacts/', {
+    const res = await fetch('https://services.leadconnectorhq.com/contacts/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: 'Bearer ' + apiKey,
+        Version: '2021-07-28',
       },
       body: JSON.stringify({
         firstName: fields.firstName,
