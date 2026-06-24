@@ -9,33 +9,37 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing name or phone' }, { status: 400 })
   }
 
-  const ghlWebhookUrl = process.env.GHL_WEBHOOK_URL
-  if (ghlWebhookUrl) {
-    try {
-      const nameParts = name.trim().split(' ')
-      const firstName = nameParts[0] || name
-      const lastName = nameParts.slice(1).join(' ') || ''
+  const apiKey = process.env.GHL_API_KEY
+  if (!apiKey) {
+    console.warn('GHL_API_KEY not set — chatbot lead not sent to GHL:', { name, phone })
+    return NextResponse.json({ ok: true })
+  }
 
-      await fetch(ghlWebhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          phone,
-          source: source || 'Sunny Chatbot',
-          tags: ['chatbot-lead', 'website'],
-          customData: {
-            capturedBy: 'Sunny Bot',
-            website: 'sunnysliderentals.com',
-          },
-        }),
-      })
-    } catch (err) {
-      console.error('GHL webhook error (chat-lead):', err)
+  const nameParts = name.trim().split(' ')
+  const firstName = nameParts[0] || name
+  const lastName = nameParts.slice(1).join(' ') || ''
+
+  try {
+    const res = await fetch('https://rest.gohighlevel.com/v1/contacts/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + apiKey,
+      },
+      body: JSON.stringify({
+        firstName,
+        lastName,
+        phone,
+        source: source || 'Sunny Chatbot',
+        tags: ['chatbot-lead', 'website'],
+      }),
+    })
+    if (!res.ok) {
+      const err = await res.text()
+      console.error('GHL API error (chat-lead):', res.status, err)
     }
-  } else {
-    console.warn('GHL_WEBHOOK_URL not set — chatbot lead not forwarded:', { name, phone })
+  } catch (err) {
+    console.error('GHL API request failed (chat-lead):', err)
   }
 
   return NextResponse.json({ ok: true })
