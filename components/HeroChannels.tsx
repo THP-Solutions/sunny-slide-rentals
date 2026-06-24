@@ -153,7 +153,7 @@ export default function HeroChannels() {
   const accentIdx = ch.headlineEn.indexOf(ch.accentLine);
 
   return (
-    <section className="flex h-[90vh] bg-[#0d2340] overflow-hidden">
+    <section className="flex h-[90vh] bg-[#0d2340]">
 
       {/* LEFT — text panel */}
       <div className="flex flex-col justify-center px-8 sm:px-12 lg:px-14 py-16 w-full lg:w-[36%] xl:w-[34%] flex-shrink-0">
@@ -197,7 +197,7 @@ export default function HeroChannels() {
       </div>
 
       {/* RIGHT — flip cards + switcher */}
-      <div className="hidden lg:flex flex-1 gap-3 p-4 items-stretch h-full">
+      <div className="hidden lg:flex flex-1 gap-3 p-4 items-stretch h-full overflow-hidden">
         {ch.cards.map((card, i) => (
           <FlipCard key={card.id} card={card} index={i} t={t} />
         ))}
