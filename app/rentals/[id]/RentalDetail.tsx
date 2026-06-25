@@ -138,10 +138,10 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
     }
   };
 
-  // Fallback: if user typed instead of picking from dropdown, geocode on blur
+  // Geocode address whenever field loses focus (handles typing, pasting, autocomplete)
   const handleAddressBlur = async () => {
     setShowSuggestions(false);
-    if (distanceMiles === null && eventAddress.length >= 10) {
+    if (eventAddress.length >= 10) {
       try {
         const url =
           `https://nominatim.openstreetmap.org/search?` +
@@ -158,12 +158,13 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
               setAddonFuelCharge(true);
               setFuelAutoApplied(true);
             } else {
+              setAddonFuelCharge(false);
               setFuelAutoApplied(false);
             }
           }
         }
       } catch {
-        // silent fail — user can manually toggle fuel charge if needed
+        // silent fail — user can still manually toggle fuel charge if needed
       }
     }
   };
