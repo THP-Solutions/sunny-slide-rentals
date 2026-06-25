@@ -9,44 +9,45 @@ export async function GET() {
     return NextResponse.json({
       status: 'ERROR',
       problem: 'GHL_API_KEY environment variable is NOT set in Vercel',
-      fix: 'Go to Vercel → your project → Settings → Environment Variables → add GHL_API_KEY',
+      fix: 'Vercel → Project → Settings → Environment Variables → add GHL_API_KEY',
     }, { status: 500 })
   }
 
-  // Test the GHL API with a real contact lookup
+  const headers = {
+    'Authorization': 'Bearer ' + apiKey,
+    'Version': '2021-07-28',
+    'Content-Type': 'application/json',
+  }
+
+  // Try to find accessible locations
   try {
-    const res = await fetch('https://services.leadconnectorhq.com/contacts/?limit=1', {
-      headers: {
-        'Authorization': 'Bearer ' + apiKey,
-        'Version': '2021-07-28',
-        'Content-Type': 'application/json',
-      },
-    })
+    const locRes = await fetch('https://services.leadconnectorhq.com/locations/search?name=sunny', { headers })
+    const locData = await locRes.json()
 
-    const data = await res.json()
+    const locations = locData?.locations ?? []
 
-    if (!res.ok) {
-      return NextResponse.json({
-        status: 'ERROR',
-        problem: 'GHL API key is set but the API returned an error',
-        ghl_status: res.status,
-        ghl_response: data,
-        fix: res.status === 401
-          ? 'API key is invalid or expired — generate a new PIT in GHL Settings → Integrations'
-          : 'Check GHL API key permissions',
-      }, { status: 500 })
+    if (locations.length === 0) {
+      // try broader search
+      const locRes2 = await fetch('https://services.leadconnectorhq.com/locations/search?name=slide', { headers })
+      const locData2 = await locRes2.json()
+      locations.push(...(locData2?.locations ?? []))
     }
 
     return NextResponse.json({
-      status: 'OK',
-      message: 'GHL API key is valid and working',
+      status: locations.length > 0 ? 'FOUND_LOCATIONS' : 'NO_LOCATIONS',
+      instruction: 'Copy the id of the sunnysliderentals location below, then add GHL_LOCATION_ID=<that id> in Vercel env vars',
+      locations: locations.map((l: { id: string; name: string; email?: string }) => ({
+        id: l.id,
+        name: l.name,
+        email: l.email,
+      })),
       api_key_prefix: apiKey.substring(0, 12) + '...',
-      contacts_returned: (data.contacts ?? []).length,
+      location_id_set: process.env.GHL_LOCATION_ID || 'NOT SET',
     })
   } catch (err) {
     return NextResponse.json({
       status: 'ERROR',
-      problem: 'Network error reaching GHL API',
+      problem: 'Could not reach GHL API',
       error: String(err),
     }, { status: 500 })
   }

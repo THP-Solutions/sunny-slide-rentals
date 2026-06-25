@@ -49,6 +49,9 @@ export async function POST(req: NextRequest) {
   const apiKey = process.env.GHL_API_KEY
   if (apiKey) {
     try {
+      // Use env locationId if set (required for agency-level PIT tokens)
+      const envLocationId = process.env.GHL_LOCATION_ID
+
       // 1. Create GHL contact
       const contactRes = await fetch(`${GHL_BASE}/contacts/`, {
         method: 'POST',
@@ -60,6 +63,7 @@ export async function POST(req: NextRequest) {
           phone,
           source: 'Website Contact Form',
           tags: ['contact-form', 'website'],
+          ...(envLocationId ? { locationId: envLocationId } : {}),
           customField: [
             ...(eventDate ? [{ key: 'event_date', value: eventDate }] : []),
             ...(city     ? [{ key: 'city',       value: city }]      : []),
@@ -70,7 +74,8 @@ export async function POST(req: NextRequest) {
       })
       const contactData = await contactRes.json()
       const contactId: string | undefined  = contactData?.contact?.id
-      const locationId: string | undefined = contactData?.contact?.locationId
+      // Use locationId from response, fall back to env var
+      const locationId: string | undefined = contactData?.contact?.locationId ?? envLocationId
 
       if (!contactRes.ok) {
         console.error('GHL contact error (contact form):', contactRes.status, contactData)

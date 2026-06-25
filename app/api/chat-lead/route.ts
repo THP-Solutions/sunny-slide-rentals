@@ -26,11 +26,7 @@ async function addConversationNote(apiKey: string, conversationId: string, messa
     await fetch(`${GHL_BASE}/conversations/messages`, {
       method: 'POST',
       headers: GHL_HEADERS(apiKey),
-      body: JSON.stringify({
-        type: 'Activity',
-        conversationId,
-        message,
-      }),
+      body: JSON.stringify({ type: 'Activity', conversationId, message }),
     })
   } catch { /* non-critical */ }
 }
@@ -52,6 +48,9 @@ export async function POST(req: NextRequest) {
   const firstName = nameParts[0] || name
   const lastName = nameParts.slice(1).join(' ') || ''
 
+  // Use env locationId if set (required for agency-level PIT tokens)
+  const envLocationId = process.env.GHL_LOCATION_ID
+
   try {
     // 1. Create contact
     const contactRes = await fetch(`${GHL_BASE}/contacts/`, {
@@ -63,12 +62,14 @@ export async function POST(req: NextRequest) {
         phone,
         source: source || 'Sunny Chatbot',
         tags: ['chatbot-lead', 'website'],
+        ...(envLocationId ? { locationId: envLocationId } : {}),
       }),
     })
 
     const contactData = await contactRes.json()
     const contactId: string | undefined = contactData?.contact?.id
-    const locationId: string | undefined = contactData?.contact?.locationId
+    // Use locationId from response, fall back to env var
+    const locationId: string | undefined = contactData?.contact?.locationId ?? envLocationId
 
     if (!contactRes.ok) {
       console.error('GHL contact error (chat-lead):', contactRes.status, contactData)
