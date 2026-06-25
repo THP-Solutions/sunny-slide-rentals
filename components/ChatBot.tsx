@@ -9,6 +9,10 @@ type Message = {
   link?: { label: string; href: string }
 }
 
+// offered = yes/no buttons shown
+// askName = waiting for name input
+// askPhone = waiting for phone input
+// done = submitted
 type LeadStep = 'idle' | 'offered' | 'askName' | 'askPhone' | 'done'
 
 const INITIAL: Message = {
@@ -101,7 +105,7 @@ const QAs: QA[] = [
     reply: () => "Don't let power access be the reason you can't have the best party of the year. We offer generator rental — add it at checkout and you're covered. Problem solved. What else is holding you back?",
   },
   {
-    patterns: ['safe', 'safety', 'age', 'weight', 'limit', 'adults', 'liability', 'insurance'],
+    patterns: ['safe', 'safety', 'weight', 'limit', 'adults', 'liability', 'insurance'],
     reply: () => "Safety is non-negotiable for us — every unit is inspected, cleaned, and safety-checked before every rental. We match you to the right unit for your age group. What ages are attending? I'll point you to the perfect fit.",
   },
   {
@@ -116,7 +120,7 @@ const QAs: QA[] = [
     buyingIntent: true,
   },
   {
-    patterns: ['contact', 'phone', 'call', 'email', 'reach', 'talk', 'speak', 'number', 'human', 'person'],
+    patterns: ['contact', 'phone', 'call', 'email', 'reach', 'talk', 'speak', 'human', 'person'],
     reply: () => "Text us right now for the fastest answer — (239) 220-4067. Real people, real fast replies. Or let me grab your info and have someone reach out to YOU. Which works better?",
     link: { label: 'Contact Page →', href: '/contact' },
     buyingIntent: true,
@@ -132,9 +136,10 @@ const QAs: QA[] = [
     buyingIntent: true,
   },
   {
-    patterns: ['year', 'old', 'age', ' yr', 'toddler', 'teen', 'adult',
-               '1 ', '2 ', '3 ', '4 ', '5 ', '6 ', '7 ', '8 ', '9 ',
-               '10', '11', '12', '13', '14', '15', '16', '17', '18'],
+    // Age patterns — use word-boundary matching in getBotReply to avoid phone number false matches
+    patterns: ['year old', 'years old', 'age', ' yr', 'toddler', 'teen', 'adult',
+               ' 1 ', ' 2 ', ' 3 ', ' 4 ', ' 5 ', ' 6 ', ' 7 ', ' 8 ', ' 9 ',
+               ' 10 ', ' 11 ', ' 12 ', ' 13 ', ' 14 ', ' 15 ', ' 16 ', ' 17 ', ' 18 '],
     reply: () => "Perfect — that age group will absolutely love our water slides! Kids 6–15 go WILD on the Tiki Tsunami or Shark Attack. For the little ones under 6, our Combo units are ideal. Want me to show you the best match?",
     link: { label: 'Find the Right Rental →', href: '/rentals' },
     buyingIntent: true,
@@ -142,14 +147,16 @@ const QAs: QA[] = [
 ]
 
 function getBotReply(input: string): QA {
-  const lower = input.toLowerCase()
+  // Pad with spaces so age patterns like ' 9 ' match at word boundaries
+  const lower = ' ' + input.toLowerCase().trim() + ' '
   for (const qa of QAs) {
     if (qa.patterns.some((p) => lower.includes(p))) return qa
   }
   return {
     patterns: [],
-    reply: () => "That's a great question — and the honest answer is our team can nail it faster than I can. Let me get you connected. What's your name and best phone number?",
+    reply: () => "Great question — our team can answer that better than I can and they reply fast! Want me to have someone reach out to you directly?",
     link: { label: 'Or browse rentals →', href: '/rentals' },
+    buyingIntent: true,
   }
 }
 
@@ -185,7 +192,7 @@ export default function ChatBot() {
     setLeadStep('offered')
     addMessage({
       from: 'sunny',
-      text: "I love the enthusiasm! 🔥 Let me have someone from our team reach out personally to lock in your date — they'll text you in minutes. What's your name?",
+      text: "I love the enthusiasm! 🔥 Want me to have someone from our team text you to lock in your date? They reply in minutes.",
     })
   }
 
@@ -199,8 +206,10 @@ export default function ChatBot() {
     } catch { /* silent */ }
   }
 
+  // Returns true if input was consumed by the lead flow
   const handleLeadInput = (text: string): boolean => {
     const lower = text.toLowerCase()
+
     if (leadStep === 'offered') {
       if (lower.includes('no') || lower.includes('nah') || lower.includes('later') || lower.includes('nope')) {
         setLeadStep('idle')
@@ -211,16 +220,29 @@ export default function ChatBot() {
         }, 600)
         return true
       }
+      // They said yes (or typed something) — ask for name
+      setLeadStep('askName')
+      addMessage({ from: 'user', text })
+      setTyping(true)
+      setTimeout(() => {
+        addMessage({ from: 'sunny', text: "Awesome! 🙌 What's your name?" })
+        setTyping(false)
+      }, 500)
+      return true
+    }
+
+    if (leadStep === 'askName') {
       setLeadName(text.trim())
       setLeadStep('askPhone')
       addMessage({ from: 'user', text })
       setTyping(true)
       setTimeout(() => {
-        addMessage({ from: 'sunny', text: `Love it, ${text.trim().split(' ')[0]}! 🤝 Best phone number to text you?` })
+        addMessage({ from: 'sunny', text: `Nice to meet you, ${text.trim().split(' ')[0]}! 🤝 What's the best number to text you?` })
         setTyping(false)
       }, 500)
       return true
     }
+
     if (leadStep === 'askPhone') {
       setLeadStep('done')
       addMessage({ from: 'user', text })
@@ -236,6 +258,7 @@ export default function ChatBot() {
       }, 800)
       return true
     }
+
     return false
   }
 
@@ -244,7 +267,8 @@ export default function ChatBot() {
     setInput('')
     setShowQuickReplies(false)
 
-    if (leadStep === 'offered' || leadStep === 'askPhone') {
+    // Lead capture flow consumes input
+    if (leadStep === 'offered' || leadStep === 'askName' || leadStep === 'askPhone') {
       handleLeadInput(text)
       return
     }
@@ -267,7 +291,10 @@ export default function ChatBot() {
     }, 600 + Math.random() * 350)
   }
 
-  const placeholder = leadStep === 'offered' ? 'Your name...' : leadStep === 'askPhone' ? 'Your phone number...' : 'Ask me anything...'
+  const placeholder =
+    leadStep === 'askName' ? 'Your name...' :
+    leadStep === 'askPhone' ? 'Your phone number...' :
+    'Ask me anything...'
 
   return (
     <>
@@ -355,13 +382,33 @@ export default function ChatBot() {
             </div>
           )}
 
-          {/* Lead capture yes/no */}
+          {/* Lead capture yes/no buttons — only shown during 'offered' step */}
           {leadStep === 'offered' && (
             <div className="px-3 py-2 flex gap-2 bg-white border-t border-gray-100 flex-shrink-0">
-              <button onClick={() => { addMessage({ from: 'user', text: 'Yes!' }); handleLeadInput('yes') }} className="flex-1 text-sm font-bold bg-[#f5a623] hover:bg-[#e09610] text-white py-2 rounded-xl transition-colors">
+              <button
+                onClick={() => {
+                  addMessage({ from: 'user', text: "Let's do it!" })
+                  setLeadStep('askName')
+                  setTyping(true)
+                  setTimeout(() => {
+                    addMessage({ from: 'sunny', text: "Awesome! 🙌 What's your name?" })
+                    setTyping(false)
+                  }, 500)
+                }}
+                className="flex-1 text-sm font-bold bg-[#f5a623] hover:bg-[#e09610] text-white py-2 rounded-xl transition-colors"
+              >
                 🔥 Let&apos;s do it
               </button>
-              <button onClick={() => { addMessage({ from: 'user', text: 'No thanks' }); handleLeadInput('no') }} className="flex-1 text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 rounded-xl transition-colors">
+              <button
+                onClick={() => {
+                  addMessage({ from: 'user', text: 'No thanks' })
+                  setLeadStep('idle')
+                  setTimeout(() => {
+                    addMessage({ from: 'sunny', text: "No problem — but seriously, don't sleep on your date. Summer fills up FAST. 👀", link: { label: 'Check Availability Now →', href: '/rentals' } })
+                  }, 600)
+                }}
+                className="flex-1 text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 rounded-xl transition-colors"
+              >
                 Not now
               </button>
             </div>
