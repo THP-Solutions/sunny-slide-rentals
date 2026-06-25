@@ -185,7 +185,7 @@ export default function ChatBot() {
     setLeadStep('offered')
     addMessage({
       from: 'sunny',
-      text: "Before you go — let me have someone from our team reach out to lock in your date. They'll text you in minutes. What's your name?",
+      text: "I love the enthusiasm! 🔥 Let me have someone from our team reach out personally to lock in your date — they'll text you in minutes. What's your name?",
     })
   }
 
@@ -260,7 +260,7 @@ export default function ChatBot() {
       if (qa.buyingIntent) {
         const count = buyingIntentCount + 1
         setBuyingIntentCount(count)
-        if (count >= 2 && leadStep === 'idle') {
+        if (count >= 3 && leadStep === 'idle') {
           setTimeout(offerLeadCapture, 1400)
         }
       }

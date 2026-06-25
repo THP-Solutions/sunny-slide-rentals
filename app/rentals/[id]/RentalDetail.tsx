@@ -591,7 +591,7 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                         <li key={s.place_id}>
                           <button
                             type="button"
-                            onClick={() => selectSuggestion(s)}
+                            onMouseDown={(e) => { e.preventDefault(); selectSuggestion(s); }}
                             className="w-full text-left px-4 py-3 text-sm text-[#0d2340] hover:bg-blue-50 border-b border-gray-50 last:border-0 transition-colors leading-snug"
                           >
                             📍 {s.display_name}
