@@ -24,12 +24,24 @@ const CONTACT_WORDS = ['my number', 'call me', 'text me', 'reach out',
 const isYes = (s: string) => YES_WORDS.some(w => s.toLowerCase().includes(w))
 const wantsContact = (s: string) => CONTACT_WORDS.some(w => s.toLowerCase().includes(w))
 
-function getAnswer(input: string): {
+interface Answer {
   text: string
   link?: { label: string; href: string }
   cta: boolean
-} {
-  const t = input.toLowerCase()
+  catchAll?: boolean   // true = user is answering a bot question, not asking one
+}
+
+function getAnswer(input: string): Answer {
+  const t = input.toLowerCase().trim()
+
+  // Numbers, crowd sizes, ages — answers to bot follow-up questions
+  if (/^\d[\d+\- ]*$|^\d+\s*(kids?|children|people|guests?|yr|years?|attendees?|\+|-)/.test(t) ||
+      /^(about|around|maybe|roughly|approximately)\s+\d/.test(t))
+    return {
+      text: '',   // handled inline — triggers lead capture
+      cta: true,
+      catchAll: true,
+    }
 
   if (/price|cost|how much|pricing|rates?|fee|afford|budget/.test(t))
     return {
@@ -54,7 +66,7 @@ function getAnswer(input: string): {
 
   if (/birthday|bday/.test(t))
     return {
-      text: 'Birthday parties are our specialty 🎂 The Tiki Tsunami (27 ft tall) and Shark Attack are crowd favorites for ages 5+. How old are the birthday kids? I’ll match you to the right slide.',
+      text: 'Birthday parties are our specialty 🎂 The Tiki Tsunami (27 ft tall) and Shark Attack are crowd favorites for ages 5+. How old are the birthday kids? I\'ll match you to the right slide.',
       link: { label: 'Browse birthday setups →', href: '/rentals' },
       cta: true,
     }
@@ -68,14 +80,14 @@ function getAnswer(input: string): {
 
   if (/corporate|company|work|office|team|employ|business/.test(t))
     return {
-      text: 'A water slide at a corporate event is a power move 💪 Your team will talk about it for years. What’s the headcount? We’ll package exactly what you need.',
+      text: "A water slide at a corporate event is a power move 💪 Your team will talk about it for years. What's the headcount? We'll package exactly what you need.",
       link: { label: 'View party packages →', href: '/rentals' },
       cta: true,
     }
 
   if (/setup|set.?up|install|deliver|pickup|pick.?up|tear.?down|bring|transport|includ/.test(t))
     return {
-      text: 'We handle everything — delivery, professional setup, safety check, and full teardown after your event. You don’t lift a finger. All included in the price.',
+      text: "We handle everything — delivery, professional setup, safety check, and full teardown. You don't lift a finger. All included in the price.",
       cta: true,
     }
 
@@ -94,7 +106,7 @@ function getAnswer(input: string): {
 
   if (/package|bundle|table|chair|tent|generator|add.?on|everything/.test(t))
     return {
-      text: "Party Packages bundle the slide with tables, chairs, and a tent — one delivery, everything handled. Most customers say it’s the easiest party they’ve ever thrown. Want details?",
+      text: "Party Packages bundle the slide with tables, chairs, and a tent — one delivery, everything handled. Most customers say it's the easiest party they've ever thrown. Want details?",
       link: { label: 'See party packages →', href: '/rentals' },
       cta: true,
     }
@@ -112,25 +124,26 @@ function getAnswer(input: string): {
       cta: true,
     }
 
-  // Catch-all — useful, never loops back to greeting
+  // Catch-all — marks that user is answering a bot question, not asking a new one
   return {
-    text: 'Great question! Our team can answer that faster than I can and they reply quick. Want me to have someone text you directly?',
+    text: "Got it! Our team can get you exactly what you need — they reply fast. Want me to have someone text you?",
     link: { label: 'Or browse rentals →', href: '/rentals' },
     cta: true,
+    catchAll: true,
   }
 }
 
-// ── Component ───────────────────────────────────────────────────────────────────────────────
+// ── Component ────────────────────────────────────────────────────────────────
 
 export default function ChatBot() {
-  const [open, setOpen]           = useState(false)
-  const [mode, setMode]           = useState<Mode>('chat')
-  const [msgs, setMsgs]           = useState<Msg[]>([{
+  const [open, setOpen]             = useState(false)
+  const [mode, setMode]             = useState<Mode>('chat')
+  const [msgs, setMsgs]             = useState<Msg[]>([{
     id: 0, from: 'bot',
-    text: "Hey! I’m Sunny 🌞 What kind of event are you planning? Tell me a bit and I’ll make sure you get the perfect setup.",
+    text: "Hey! I'm Sunny 🌞 What kind of event are you planning? Tell me a bit and I'll make sure you get the perfect setup.",
   }])
-  const [input, setInput]         = useState('')
-  const [leadName, setLeadName]   = useState('')
+  const [input, setInput]           = useState('')
+  const [leadName, setLeadName]     = useState('')
   const [offerShown, setOfferShown] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef  = useRef<HTMLInputElement>(null)
@@ -141,18 +154,27 @@ export default function ChatBot() {
   const push = (m: Omit<Msg, 'id'>) =>
     setMsgs(prev => [...prev, { ...m, id: prev.length }])
 
+  const goToLead = (pretext?: string) => {
+    setMode('askName')
+    setOfferShown(true)
+    setTimeout(() => push({
+      from: 'bot',
+      text: pretext ?? "Awesome! 🙌 What's your name?",
+    }), 400)
+  }
+
   const handleSend = (override?: string) => {
     const text = (override ?? input).trim()
     if (!text) return
     setInput('')
     push({ from: 'user', text })
 
-    // ─ Lead flow ────────────────────────────────────────────────────────────────
+    // ── Lead flow ────────────────────────────────────────────────────────────
     if (mode === 'askName') {
       setLeadName(text)
       setMode('askPhone')
       setTimeout(() =>
-        push({ from: 'bot', text: `Nice to meet you, ${text}! 🤝 What’s the best number to text you?` }),
+        push({ from: 'bot', text: `Nice to meet you, ${text}! 🤝 What's the best number to text you?` }),
         400)
       return
     }
@@ -175,24 +197,30 @@ export default function ChatBot() {
       return
     }
 
-    // ─ Chat mode ────────────────────────────────────────────────────────────
-    // Direct contact request
+    // ── Chat mode ────────────────────────────────────────────────────────────
+
+    // Explicit contact request
     if (wantsContact(text)) {
-      setMode('askName')
-      setTimeout(() => push({ from: 'bot', text: "Of course! What’s your name?" }), 400)
+      goToLead("Of course! What's your name?")
       return
     }
 
-    // "Yes" after offer was shown
+    // "Yes/sure/please" after offer was already made
     if (offerShown && isYes(text)) {
-      setMode('askName')
-      setTimeout(() => push({ from: 'bot', text: "Awesome! 🙌 What’s your name?" }), 400)
+      goToLead()
       return
     }
 
-    // Normal Q&A
-    const resp     = getAnswer(text)
-    const showCta  = resp.cta && !offerShown
+    // Q&A
+    const resp = getAnswer(text)
+
+    // If offer already shown and user sent a follow-up answer (catch-all) → capture lead
+    if (offerShown && resp.catchAll) {
+      goToLead("Perfect! Let me have someone from our team reach out with the right setup. What's your name?")
+      return
+    }
+
+    const showCta = resp.cta && !offerShown
     if (showCta) setOfferShown(true)
 
     setTimeout(() =>
@@ -201,11 +229,11 @@ export default function ChatBot() {
   }
 
   const acceptLead = () => {
+    push({ from: 'bot', text: "Awesome! 🙌 What's your name?" })
     setMode('askName')
-    push({ from: 'bot', text: "Awesome! 🙌 What’s your name?" })
   }
 
-  // ─ Closed bubble ───────────────────────────────────────────────────────────────
+  // ── Closed bubble ─────────────────────────────────────────────────────────
   if (!open) return (
     <button
       onClick={() => setOpen(true)}
@@ -217,7 +245,7 @@ export default function ChatBot() {
     </button>
   )
 
-  // ─ Chat window ──────────────────────────────────────────────────────────────
+  // ── Chat window ───────────────────────────────────────────────────────────
   return (
     <div
       className="fixed bottom-6 right-6 z-50 flex flex-col rounded-2xl shadow-2xl overflow-hidden bg-white"
@@ -233,7 +261,7 @@ export default function ChatBot() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-white font-bold text-sm">Sunny</p>
-          <p className="text-blue-200 text-xs">Sunny Slide Rentals • Replies instantly</p>
+          <p className="text-blue-200 text-xs">Sunny Slide Rentals · Replies instantly</p>
         </div>
         <button
           onClick={() => setOpen(false)}
@@ -268,7 +296,6 @@ export default function ChatBot() {
                 </Link>
               )}
 
-              {/* CTA button — only on first offer, only while still in chat mode */}
               {m.showCta && mode === 'chat' && (
                 <button
                   onClick={acceptLead}
@@ -279,7 +306,6 @@ export default function ChatBot() {
                 </button>
               )}
 
-              {/* Quick reply chips on the opening message only */}
               {m.id === 0 && mode === 'chat' && (
                 <div className="mt-2 flex flex-wrap gap-1">
                   {QUICK_REPLIES.map(q => (
@@ -310,7 +336,7 @@ export default function ChatBot() {
           placeholder={
             mode === 'askName'  ? 'Your first name…' :
             mode === 'askPhone' ? 'Your phone number…' :
-            mode === 'done'     ? "✅ We’ll be in touch!" :
+            mode === 'done'     ? "✅ We'll be in touch!" :
             'Ask anything…'
           }
           disabled={mode === 'done'}
