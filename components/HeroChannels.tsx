@@ -153,10 +153,10 @@ export default function HeroChannels() {
   const accentIdx = ch.headlineEn.indexOf(ch.accentLine);
 
   return (
-    <section className="flex h-[90vh] bg-[#0d2340]">
+    <section className="flex min-h-screen bg-[#0d2340]">
 
       {/* LEFT — text panel */}
-      <div className="flex flex-col justify-center px-8 sm:px-12 lg:px-14 py-16 w-full lg:w-[36%] xl:w-[34%] flex-shrink-0">
+      <div className="flex flex-col justify-center px-8 sm:px-12 lg:px-14 pt-8 pb-10 w-full lg:w-[36%] xl:w-[34%] flex-shrink-0">
         <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-8 w-fit">
           <span className="text-[#f5a623] text-sm">★★★★★</span>
           <span className="text-white text-xs font-semibold">{t("SW Florida's #1 Rentals", 'Los #1 Alquileres del SO de Florida')}</span>
@@ -197,7 +197,7 @@ export default function HeroChannels() {
       </div>
 
       {/* RIGHT — flip cards + switcher */}
-      <div className="hidden lg:flex flex-1 gap-3 p-4 items-stretch h-full overflow-hidden">
+      <div className="hidden lg:flex flex-1 gap-3 p-4 items-stretch min-h-screen overflow-hidden">
         {ch.cards.map((card, i) => (
           <FlipCard key={card.id} card={card} index={i} t={t} />
         ))}

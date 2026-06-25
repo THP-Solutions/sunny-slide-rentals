@@ -2,11 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { RENTALS } from '@/lib/rentals'
 
-
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
-  // Guard: Stripe key must be configured
   const stripeKey = process.env.STRIPE_SECRET_KEY
   if (!stripeKey || stripeKey.startsWith('sk_test_YOUR') || stripeKey === '') {
     return NextResponse.json(
@@ -26,6 +24,8 @@ export async function POST(req: NextRequest) {
       addonChairs = 0,
       addonTent = 0,
       addonGenerator = 0,
+      addonFuelCharge = false,   // $39.99 if delivery > 20 miles
+      paymentType = 'deposit',   // 'deposit' | 'full'
       eventAddress = '',
     } = body
 
@@ -34,37 +34,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Rental not found' }, { status: 404 })
     }
 
+    const fuelCharge = addonFuelCharge ? 39.99 : 0
     const addonsTotal =
-      addonTables * 10 + addonChairs * 3 + addonTent * 59 + addonGenerator * 75
+      addonTables * 10 + addonChairs * 3 + addonTent * 59 + addonGenerator * 75 + fuelCharge
     const totalAmount = rental.price + addonsTotal
-    // Minimum deposit is $100 per company policy
-    const depositAmount = Math.max(100, Math.ceil(totalAmount * 0.25))
 
-    // Human-readable event date
+    // Payment amount: full or 25% deposit (min $100)
+    const depositAmount = Math.max(100, Math.ceil(totalAmount * 0.25))
+    const chargeAmount = paymentType === 'full' ? totalAmount : depositAmount
+    const isFullPayment = paymentType === 'full'
+
     const formattedDate = new Date(eventDate + 'T00:00:00').toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     })
 
-    // Build add-on description lines
     const addonLines = [
-      addonTables > 0 ? `${addonTables}× 8ft Table${addonTables > 1 ? 's' : ''} (+$${addonTables * 10})` : '',
-      addonChairs > 0 ? `${addonChairs}× Chair${addonChairs > 1 ? 's' : ''} (+$${addonChairs * 3})` : '',
-      addonTent > 0 ? `1× 10×20 Tent (+$59)` : '',
-      addonGenerator > 0 ? `1× Generator (+$75)` : '',
-    ]
-      .filter(Boolean)
-      .join(', ')
+      addonTables  > 0 ? `${addonTables}× 8ft Table${addonTables > 1 ? 's' : ''} (+$${addonTables * 10})` : '',
+      addonChairs  > 0 ? `${addonChairs}× Chair${addonChairs > 1 ? 's' : ''} (+$${addonChairs * 3})` : '',
+      addonTent    > 0 ? '1× 16×32 Frame Tent (+$59)' : '',
+      addonGenerator > 0 ? '1× Generator (+$75)' : '',
+      addonFuelCharge   ? 'Fuel Charge (+$39.99)' : '',
+    ].filter(Boolean).join(', ')
 
     const description = [
       `Event date: ${formattedDate}`,
       addonLines && `Add-ons: ${addonLines}`,
-      `Total: $${totalAmount} | Deposit: $${depositAmount} | Balance due day-of: $${totalAmount - depositAmount}`,
-    ]
-      .filter(Boolean)
-      .join(' · ')
+      isFullPayment
+        ? `Total: $${totalAmount} | PAID IN FULL`
+        : `Total: $${totalAmount} | Deposit: $${depositAmount} | Balance due day-of: $${totalAmount - depositAmount}`,
+    ].filter(Boolean).join(' · ')
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
@@ -75,10 +73,12 @@ export async function POST(req: NextRequest) {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: `${rental.name} — 25% Deposit`,
+              name: isFullPayment
+                ? `${rental.name} — Paid in Full`
+                : `${rental.name} — 25% Deposit`,
               description,
             },
-            unit_amount: depositAmount * 100,
+            unit_amount: Math.round(chargeAmount * 100),
           },
           quantity: 1,
         },
@@ -92,11 +92,14 @@ export async function POST(req: NextRequest) {
         rentalId,
         rentalName: rental.name,
         eventDate,
-        addonTables: String(addonTables),
-        addonChairs: String(addonChairs),
-        addonTent: String(addonTent),
+        addonTables:  String(addonTables),
+        addonChairs:  String(addonChairs),
+        addonTent:    String(addonTent),
         addonGenerator: String(addonGenerator),
-        totalAmount: String(totalAmount),
+        addonFuelCharge: String(addonFuelCharge),
+        paymentType,
+        totalAmount:  String(totalAmount),
+        chargeAmount: String(chargeAmount),
         depositAmount: String(depositAmount),
         eventAddress,
       },
@@ -105,8 +108,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: session.url })
   } catch (err) {
     console.error('Stripe checkout error:', err)
-    const message =
-      err instanceof Error ? err.message : 'Payment setup failed.'
+    const message = err instanceof Error ? err.message : 'Payment setup failed.'
     return NextResponse.json(
       { error: `${message} Please text us at (239) 220-4067 to book.` },
       { status: 500 },

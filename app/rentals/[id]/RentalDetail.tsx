@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRef, useState, useCallback, useEffect } from 'react';
 import type { Rental } from '@/lib/rentals';
 import { ADDONS } from '@/lib/rentals';
-import { calcAddonsTotal, calcTotal, calcDeposit, baseDeposit } from '@/lib/cart';
+import { calcAddonsTotal, calcTotal, baseDeposit } from '@/lib/cart';
 
 interface Props {
   rental: Rental;
@@ -41,6 +41,11 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
   const [eventAddress, setEventAddress] = useState('');
   const [availability, setAvailability] = useState<AvailabilityStatus>('idle');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+
+  // Payment options
+  const [paymentType, setPaymentType] = useState<'deposit' | 'full'>('deposit');
+  const [addonFuelCharge, setAddonFuelCharge] = useState(false);
+  const [waiverSigned, setWaiverSigned] = useState(false);
 
   // Address autocomplete state
   const [suggestions, setSuggestions] = useState<NominatimResult[]>([]);
@@ -135,12 +140,15 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
   };
 
   const addonsTotal = calcAddonsTotal(selection);
-  const totalAmount = calcTotal(selection);
-  const depositAmount = calcDeposit(selection);
+  const baseTotal = calcTotal(selection);
+  const fuelAmount = addonFuelCharge ? 39.99 : 0;
+  const totalAmount = baseTotal + fuelAmount;
+  const depositAmount = Math.max(100, Math.ceil(totalAmount * 0.25));
+  const chargeAmount = paymentType === 'full' ? totalAmount : depositAmount;
   const staticDeposit = baseDeposit(rental.price);
   const isWet = rental.wetDry.toLowerCase().includes('wet');
 
-  const canCheckout = eventDate && availability === 'available' && !isCheckingOut;
+  const canCheckout = !!(eventDate && availability === 'available' && !isCheckingOut && waiverSigned);
 
   const handleCheckout = async () => {
     if (!canCheckout) return;
@@ -156,6 +164,8 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
           addonChairs: quantities.chairs ?? 0,
           addonTent: quantities.tent ?? 0,
           addonGenerator: quantities.generator ?? 0,
+          addonFuelCharge,
+          paymentType,
           eventAddress,
         }),
       });
@@ -195,7 +205,7 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
 
-        {/* ── STEP 1 of 3: Product Info ── */}
+        {/* STEP 1: Product Info */}
         <section className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-2">
             {/* Hero Image */}
@@ -238,7 +248,7 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
 
               <div className="flex flex-wrap gap-2">
                 <span className="inline-flex items-center gap-1.5 bg-blue-50 text-[#1a6fa8] text-sm font-medium px-3 py-1.5 rounded-full border border-blue-100">
-                  📐 {rental.dimensions}
+                  📏 {rental.dimensions}
                 </span>
                 <span className="inline-flex items-center gap-1.5 bg-cyan-50 text-cyan-700 text-sm font-medium px-3 py-1.5 rounded-full border border-cyan-100">
                   💧 {rental.wetDry}
@@ -260,12 +270,12 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
           </div>
         </section>
 
-        {/* ── Main + Sidebar Grid ── */}
+        {/* Main + Sidebar Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Steps B, C, D */}
+          {/* Left: Steps 2, 3 */}
           <div className="lg:col-span-2 space-y-6">
 
-            {/* ── Section B: Good to Know ── */}
+            {/* Section B: Good to Know */}
             <section className="bg-white rounded-2xl shadow-sm p-6 sm:p-8">
               <h2 className="text-xl font-bold text-[#0d2340] mb-5">Good to Know</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -281,7 +291,7 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
               </div>
             </section>
 
-            {/* ── STEP 2 of 3: Add-ons ── */}
+            {/* STEP 2: Add-ons */}
             <section className="bg-white rounded-2xl shadow-sm p-6 sm:p-8">
               <div className="flex items-center gap-3 mb-1">
                 <span className="w-7 h-7 rounded-full bg-[#1a6fa8] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">2</span>
@@ -331,16 +341,42 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                     </div>
                   );
                 })}
+
+                {/* Fuel Charge add-on */}
+                <div
+                  className={`flex items-center gap-3 p-4 rounded-xl border transition-colors cursor-pointer ${
+                    addonFuelCharge
+                      ? 'border-[#f5a623] bg-yellow-50'
+                      : 'border-gray-100 hover:border-yellow-200 bg-gray-50 hover:bg-yellow-50/20'
+                  }`}
+                  onClick={() => setAddonFuelCharge((v) => !v)}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-[#0d2340] text-sm">⛽ Fuel Charge</p>
+                    <p className="text-gray-400 text-xs mt-0.5">Required if delivery is more than 20 miles</p>
+                    <p className="text-[#1a6fa8] font-bold text-sm">$39.99 flat fee</p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <div className={`w-10 h-6 rounded-full transition-colors flex items-center px-0.5 ${
+                      addonFuelCharge ? 'bg-[#f5a623]' : 'bg-gray-200'
+                    }`}>
+                      <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                        addonFuelCharge ? 'translate-x-4' : 'translate-x-0'
+                      }`} />
+                    </div>
+                  </div>
+                </div>
               </div>
-              {addonsTotal > 0 && (
+
+              {(addonsTotal > 0 || addonFuelCharge) && (
                 <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex justify-between items-center">
                   <span className="font-semibold text-[#0d2340] text-sm">Add-ons Total</span>
-                  <span className="text-xl font-extrabold text-[#f5a623]">+${addonsTotal}</span>
+                  <span className="text-xl font-extrabold text-[#f5a623]">+${(addonsTotal + fuelAmount).toFixed(2).replace('.00', '')}</span>
                 </div>
               )}
             </section>
 
-            {/* ── STEP 3 of 3: Book & Pay Deposit ── */}
+            {/* STEP 3: Book & Pay */}
             <section
               id="booking"
               ref={bookingRef}
@@ -351,10 +387,45 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                 <h2 className="text-xl font-bold text-[#0d2340]">Pick Your Date &amp; Reserve</h2>
               </div>
               <p className="text-gray-500 text-sm mb-6 ml-10 leading-relaxed">
-                25% non-refundable deposit holds your date — minimum $100. Remaining balance due day of event.
+                Choose your date and payment option below. All bookings are held with a non-refundable deposit.
               </p>
 
               <div className="space-y-5">
+                {/* Payment Type Toggle */}
+                <div>
+                  <label className="block text-sm font-bold text-[#0d2340] mb-3">
+                    💳 Payment Option
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentType('deposit')}
+                      className={`p-4 rounded-xl border-2 text-left transition-all ${
+                        paymentType === 'deposit'
+                          ? 'border-[#f5a623] bg-yellow-50'
+                          : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                      }`}
+                    >
+                      <p className="font-bold text-[#0d2340] text-sm">25% Deposit</p>
+                      <p className="text-[#f5a623] font-extrabold text-lg">${depositAmount}</p>
+                      <p className="text-gray-400 text-xs">Due now • Balance day-of</p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentType('full')}
+                      className={`p-4 rounded-xl border-2 text-left transition-all ${
+                        paymentType === 'full'
+                          ? 'border-[#1a6fa8] bg-blue-50'
+                          : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                      }`}
+                    >
+                      <p className="font-bold text-[#0d2340] text-sm">Pay in Full</p>
+                      <p className="text-[#1a6fa8] font-extrabold text-lg">${totalAmount.toFixed(2).replace('.00', '')}</p>
+                      <p className="text-gray-400 text-xs">Nothing due day-of</p>
+                    </button>
+                  </div>
+                </div>
+
                 {/* Date Picker */}
                 <div>
                   <label className="block text-sm font-bold text-[#0d2340] mb-2">
@@ -392,7 +463,7 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                   </div>
                 </div>
 
-                {/* Event Address with Nominatim autocomplete */}
+                {/* Event Address with autocomplete */}
                 <div className="relative" ref={suggestionsRef}>
                   <label className="block text-sm font-bold text-[#0d2340] mb-2">
                     📍 Event Address
@@ -440,20 +511,61 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                         <span className="font-semibold text-[#0d2340]">+${addonsTotal}</span>
                       </div>
                     )}
+                    {addonFuelCharge && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">⛽ Fuel Charge</span>
+                        <span className="font-semibold text-[#0d2340]">+$39.99</span>
+                      </div>
+                    )}
                     <div className="border-t border-gray-200 pt-3 mt-2">
                       <div className="flex justify-between text-sm font-bold">
                         <span className="text-[#0d2340]">Total</span>
-                        <span className="text-[#0d2340]">${totalAmount}</span>
+                        <span className="text-[#0d2340]">${totalAmount.toFixed(2).replace('.00', '')}</span>
                       </div>
-                      <div className="flex justify-between mt-1.5">
-                        <span className="text-sm font-bold text-[#f5a623]">Deposit Due Today</span>
-                        <span className="text-lg font-extrabold text-[#f5a623]">${depositAmount}</span>
-                      </div>
-                      <p className="text-xs text-gray-400 mt-1">
-                        Remaining ${totalAmount - depositAmount} due day of event.
-                      </p>
+                      {paymentType === 'deposit' ? (
+                        <>
+                          <div className="flex justify-between mt-1.5">
+                            <span className="text-sm font-bold text-[#f5a623]">Deposit Due Today</span>
+                            <span className="text-lg font-extrabold text-[#f5a623]">${depositAmount}</span>
+                          </div>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Remaining ${(totalAmount - depositAmount).toFixed(2).replace('.00', '')} due day of event.
+                          </p>
+                        </>
+                      ) : (
+                        <div className="flex justify-between mt-1.5">
+                          <span className="text-sm font-bold text-[#1a6fa8]">Paid in Full — Nothing Due Day-Of</span>
+                          <span className="text-lg font-extrabold text-[#1a6fa8]">${totalAmount.toFixed(2).replace('.00', '')}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
+                </div>
+
+                {/* Waiver Checkbox */}
+                <div className={`p-4 rounded-xl border-2 transition-colors ${
+                  waiverSigned ? 'border-green-300 bg-green-50' : 'border-orange-200 bg-orange-50'
+                }`}>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={waiverSigned}
+                      onChange={(e) => setWaiverSigned(e.target.checked)}
+                      className="mt-0.5 w-5 h-5 accent-[#1a6fa8] flex-shrink-0 cursor-pointer"
+                    />
+                    <span className="text-sm text-[#0d2340] leading-relaxed">
+                      <strong>I agree to the Rental Agreement, Safety Rules, Assumption of Risk, Release of Liability, and Indemnification Agreement.</strong>{' '}
+                      I certify I am at least 18 years of age, have read and understand the full waiver, and voluntarily accept responsibility for supervision of all participants.{' '}
+                      <Link href="/waiver" target="_blank" className="text-[#1a6fa8] underline font-semibold">
+                        Read full agreement →
+                      </Link>
+                    </span>
+                  </label>
+                  {!waiverSigned && (
+                    <p className="text-orange-700 text-xs font-semibold mt-2 ml-8">
+                      ⚠️ You must agree to the waiver before completing your booking.
+                    </p>
+                  )}
                 </div>
 
                 {/* Reserve Button */}
@@ -470,6 +582,10 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                     ? 'Checking availability…'
                     : availability !== 'available'
                     ? 'Date Unavailable — Choose Another'
+                    : !waiverSigned
+                    ? '⚠️ Agree to Waiver to Continue'
+                    : paymentType === 'full'
+                    ? `🔒 Pay in Full — $${totalAmount.toFixed(2).replace('.00', '')}`
                     : `🔒 Reserve Now — Pay $${depositAmount} Deposit`}
                 </button>
 
@@ -481,17 +597,19 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
             </section>
           </div>
 
-          {/* ── Right Sidebar ── */}
+          {/* Right Sidebar */}
           <div className="space-y-5">
             {/* Sticky Price Card */}
             <div className="bg-[#0d2340] rounded-2xl p-6 text-white sticky top-20">
               <p className="text-3xl font-extrabold">${rental.price}</p>
               <p className="text-white/50 text-sm mb-1">per day</p>
-              {addonsTotal > 0 && (
-                <p className="text-white/60 text-xs mb-1">+ ${addonsTotal} add-ons = ${totalAmount} total</p>
+              {(addonsTotal > 0 || addonFuelCharge) && (
+                <p className="text-white/60 text-xs mb-1">+ ${(addonsTotal + fuelAmount).toFixed(2).replace('.00', '')} add-ons = ${totalAmount.toFixed(2).replace('.00', '')} total</p>
               )}
               <p className="text-[#f5a623] font-bold text-sm mb-5">
-                ${depositAmount} deposit to reserve
+                {paymentType === 'full'
+                  ? `$${totalAmount.toFixed(2).replace('.00', '')} to pay in full`
+                  : `$${depositAmount} deposit to reserve`}
               </p>
               <button
                 onClick={scrollToBooking}
@@ -538,7 +656,7 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
           </div>
         </div>
 
-        {/* ── Related Rentals ── */}
+        {/* Related Rentals */}
         {relatedRentals.length > 0 && (
           <section className="bg-white rounded-2xl shadow-sm p-6 sm:p-8">
             <h2 className="text-xl font-bold text-[#0d2340] mb-6">Frequently Rented Together</h2>

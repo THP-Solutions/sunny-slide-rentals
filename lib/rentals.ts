@@ -154,11 +154,11 @@ export const RENTALS: Rental[] = [
     price: 325,
     deposit: 82,
     category: 'Party Packages',
-    dimensions: "20' L × 20' W",
+    dimensions: "32' L × 16' W",
     wetDry: 'N/A',
     rentalHours: 9,
     description:
-      "Everything you need for seating and shade. 10×20 tent, 8ft tables, and white folding chairs — delivered and set up.",
+      "Everything you need for seating and shade. 16×32 tent, 8ft tables, and white folding chairs — delivered and set up.",
     image: '/images/tiki-tsunami-mega-splash.jpg',
     calendarId: '5ZfM2NUPUmL0SzV4LRyu',
   },
@@ -172,7 +172,7 @@ export const RENTALS: Rental[] = [
     wetDry: 'N/A',
     rentalHours: 9,
     description:
-      "The ultimate bundle! Classic bounce house + tent, tables, and chairs for a complete party setup.",
+      "The ultimate party bundle! Choose any water slide or combo unit + 16×32 tent, 8ft tables, and white chairs. Everything delivered and set up — you just show up.",
     image: '/images/akua-falls-dual-lane-combo.jpg',
     calendarId: 'guQnUYVaBIibEtLzOphS',
   },
@@ -203,7 +203,7 @@ export const CATEGORIES = [
 export const ADDONS: Addon[] = [
   { id: 'tables', name: '8ft Folding Tables', price: 10, unit: 'each', max: 20 },
   { id: 'chairs', name: 'White Folding Chairs', price: 3, unit: 'each', max: 100 },
-  { id: 'tent', name: '10×20 Pop-Up Tent', price: 59, unit: 'flat', max: 1 },
+  { id: 'tent', name: '16×32 Frame Tent', price: 59, unit: 'flat', max: 1 },
   { id: 'generator', name: 'Generator (if no outlet within 100ft)', price: 75, unit: 'flat', max: 1 },
 ];
 
