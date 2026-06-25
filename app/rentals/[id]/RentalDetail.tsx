@@ -17,6 +17,25 @@ type AvailabilityStatus = 'idle' | 'checking' | 'available' | 'unavailable' | 'e
 interface NominatimResult {
   place_id: number;
   display_name: string;
+  lat: string;
+  lon: string;
+}
+
+// Business base location — Cape Coral, FL
+const BUSINESS_LAT = 26.5629;
+const BUSINESS_LNG = -81.9495;
+const FUEL_CHARGE_MILES = 20;
+
+function haversineMiles(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 3958.8; // Earth radius in miles
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 // Minimum event date: tomorrow
@@ -48,6 +67,8 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
   // Payment options
   const [paymentType, setPaymentType] = useState<'deposit' | 'full'>('deposit');
   const [addonFuelCharge, setAddonFuelCharge] = useState(false);
+  const [distanceMiles, setDistanceMiles] = useState<number | null>(null);
+  const [fuelAutoApplied, setFuelAutoApplied] = useState(false);
   const [waiverSigned, setWaiverSigned] = useState(false);
 
   // Address autocomplete state
@@ -74,7 +95,7 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
     try {
       const url =
         `https://nominatim.openstreetmap.org/search?` +
-        `q=${encodeURIComponent(query)}&format=json&countrycodes=us&limit=5&addressdetails=0`;
+        `q=${encodeURIComponent(query)}&format=json&countrycodes=us&limit=5&addressdetails=0&extratags=0`;
       const res = await fetch(url, {
         headers: { 'Accept-Language': 'en-US,en' },
       });
@@ -97,6 +118,19 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
     setEventAddress(s.display_name);
     setSuggestions([]);
     setShowSuggestions(false);
+    // Auto-apply fuel charge if >20 miles from business
+    const lat = parseFloat(s.lat);
+    const lon = parseFloat(s.lon);
+    if (!isNaN(lat) && !isNaN(lon)) {
+      const miles = haversineMiles(BUSINESS_LAT, BUSINESS_LNG, lat, lon);
+      setDistanceMiles(Math.round(miles));
+      if (miles > FUEL_CHARGE_MILES) {
+        setAddonFuelCharge(true);
+        setFuelAutoApplied(true);
+      } else {
+        setFuelAutoApplied(false);
+      }
+    }
   };
 
   const scrollToBooking = () =>
@@ -155,8 +189,9 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
 
   const canCheckout = !!(eventDate && availability === 'available' && !isCheckingOut && waiverSigned);
 
-  const handleCheckout = async () => {
+  const handleCheckout = async (type: 'deposit' | 'full') => {
     if (!canCheckout) return;
+    setPaymentType(type);
     setIsCheckingOut(true);
     try {
       const res = await fetch('/api/checkout', {
@@ -172,7 +207,7 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
           addonFuelCharge,
           partyBundle: bundlePrice,
           partyBundleName: bundle ? bundle.name : '',
-          paymentType,
+          paymentType: type,
           eventAddress,
         }),
       });
@@ -389,26 +424,43 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
 
                 {/* Fuel Charge add-on */}
                 <div
-                  className={`flex items-center gap-3 p-4 rounded-xl border transition-colors cursor-pointer ${
-                    addonFuelCharge
-                      ? 'border-[#f5a623] bg-yellow-50'
-                      : 'border-gray-100 hover:border-yellow-200 bg-gray-50 hover:bg-yellow-50/20'
+                  className={`flex items-center gap-3 p-4 rounded-xl border transition-colors ${
+                    fuelAutoApplied
+                      ? 'border-orange-400 bg-orange-50 cursor-not-allowed'
+                      : addonFuelCharge
+                      ? 'border-[#f5a623] bg-yellow-50 cursor-pointer'
+                      : 'border-gray-100 hover:border-yellow-200 bg-gray-50 hover:bg-yellow-50/20 cursor-pointer'
                   }`}
-                  onClick={() => setAddonFuelCharge((v) => !v)}
+                  onClick={() => !fuelAutoApplied && setAddonFuelCharge((v) => !v)}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-[#0d2340] text-sm">⛽ Fuel Charge</p>
-                    <p className="text-gray-400 text-xs mt-0.5">Required if delivery is more than 20 miles</p>
+                    <p className="font-semibold text-[#0d2340] text-sm">
+                      ⛽ Fuel Charge
+                      {fuelAutoApplied && (
+                        <span className="ml-2 text-xs font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full">
+                          Auto-applied — {distanceMiles} mi away
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-gray-400 text-xs mt-0.5">
+                      {fuelAutoApplied
+                        ? `Your event is ${distanceMiles} miles from our base — fuel charge is required.`
+                        : 'Required if delivery is more than 20 miles from Cape Coral'}
+                    </p>
                     <p className="text-[#1a6fa8] font-bold text-sm">$39.99 flat fee</p>
                   </div>
                   <div className="flex-shrink-0">
-                    <div className={`w-10 h-6 rounded-full transition-colors flex items-center px-0.5 ${
-                      addonFuelCharge ? 'bg-[#f5a623]' : 'bg-gray-200'
-                    }`}>
-                      <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${
-                        addonFuelCharge ? 'translate-x-4' : 'translate-x-0'
-                      }`} />
-                    </div>
+                    {fuelAutoApplied ? (
+                      <span className="text-orange-700 font-bold text-sm">✓ Required</span>
+                    ) : (
+                      <div className={`w-10 h-6 rounded-full transition-colors flex items-center px-0.5 ${
+                        addonFuelCharge ? 'bg-[#f5a623]' : 'bg-gray-200'
+                      }`}>
+                        <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                          addonFuelCharge ? 'translate-x-4' : 'translate-x-0'
+                        }`} />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -436,41 +488,6 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
               </p>
 
               <div className="space-y-5">
-                {/* Payment Type Toggle */}
-                <div>
-                  <label className="block text-sm font-bold text-[#0d2340] mb-3">
-                    💳 Payment Option
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentType('deposit')}
-                      className={`p-4 rounded-xl border-2 text-left transition-all ${
-                        paymentType === 'deposit'
-                          ? 'border-[#f5a623] bg-yellow-50'
-                          : 'border-gray-200 bg-gray-50 hover:border-gray-300'
-                      }`}
-                    >
-                      <p className="font-bold text-[#0d2340] text-sm">25% Deposit</p>
-                      <p className="text-[#f5a623] font-extrabold text-lg">${depositAmount}</p>
-                      <p className="text-gray-400 text-xs">Due now • Balance day-of</p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPaymentType('full')}
-                      className={`p-4 rounded-xl border-2 text-left transition-all ${
-                        paymentType === 'full'
-                          ? 'border-[#1a6fa8] bg-blue-50'
-                          : 'border-gray-200 bg-gray-50 hover:border-gray-300'
-                      }`}
-                    >
-                      <p className="font-bold text-[#0d2340] text-sm">Pay in Full</p>
-                      <p className="text-[#1a6fa8] font-extrabold text-lg">${totalAmount.toFixed(2).replace('.00', '')}</p>
-                      <p className="text-gray-400 text-xs">Nothing due day-of</p>
-                    </button>
-                  </div>
-                </div>
-
                 {/* Date Picker */}
                 <div>
                   <label className="block text-sm font-bold text-[#0d2340] mb-2">
@@ -523,6 +540,14 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-[#0d2340] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1a6fa8] focus:border-transparent transition"
                   />
                   <p className="text-xs text-gray-400 mt-1.5">We'll confirm delivery logistics before your event.</p>
+                  {distanceMiles !== null && (
+                    <p className={`text-xs font-semibold mt-1 ${distanceMiles > FUEL_CHARGE_MILES ? 'text-orange-600' : 'text-green-600'}`}>
+                      📍 ~{distanceMiles} miles from our base
+                      {distanceMiles > FUEL_CHARGE_MILES
+                        ? ' — fuel charge automatically applied'
+                        : ' — within free delivery zone ✓'}
+                    </p>
+                  )}
                   {showSuggestions && suggestions.length > 0 && (
                     <ul className="absolute z-30 top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden">
                       {suggestions.map((s) => (
@@ -573,22 +598,14 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                         <span className="text-[#0d2340]">Total</span>
                         <span className="text-[#0d2340]">${totalAmount.toFixed(2).replace('.00', '')}</span>
                       </div>
-                      {paymentType === 'deposit' ? (
-                        <>
-                          <div className="flex justify-between mt-1.5">
-                            <span className="text-sm font-bold text-[#f5a623]">Deposit Due Today</span>
-                            <span className="text-lg font-extrabold text-[#f5a623]">${depositAmount}</span>
-                          </div>
-                          <p className="text-xs text-gray-400 mt-1">
-                            Remaining ${(totalAmount - depositAmount).toFixed(2).replace('.00', '')} due day of event.
-                          </p>
-                        </>
-                      ) : (
-                        <div className="flex justify-between mt-1.5">
-                          <span className="text-sm font-bold text-[#1a6fa8]">Paid in Full — Nothing Due Day-Of</span>
-                          <span className="text-lg font-extrabold text-[#1a6fa8]">${totalAmount.toFixed(2).replace('.00', '')}</span>
-                        </div>
-                      )}
+                      <div className="flex justify-between mt-1.5">
+                        <span className="text-sm text-gray-500">25% Deposit option</span>
+                        <span className="text-sm font-bold text-[#f5a623]">${depositAmount}</span>
+                      </div>
+                      <div className="flex justify-between mt-1">
+                        <span className="text-sm text-gray-500">Pay in Full option</span>
+                        <span className="text-sm font-bold text-[#1a6fa8]">${totalAmount.toFixed(2).replace('.00', '')}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -619,26 +636,44 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                   )}
                 </div>
 
-                {/* Reserve Button */}
-                <button
-                  onClick={handleCheckout}
-                  disabled={!canCheckout}
-                  className="w-full bg-[#f5a623] hover:bg-[#e09610] active:bg-[#c87d00] disabled:opacity-40 disabled:cursor-not-allowed text-white font-extrabold py-4 px-6 rounded-xl text-lg transition-colors shadow-lg"
-                >
-                  {isCheckingOut
-                    ? '⏳ Redirecting to secure payment…'
-                    : !eventDate
-                    ? 'Select a Date Above to Continue'
-                    : availability === 'checking'
-                    ? 'Checking availability…'
-                    : availability !== 'available'
-                    ? 'Date Unavailable — Choose Another'
-                    : !waiverSigned
-                    ? '⚠️ Agree to Waiver to Continue'
-                    : paymentType === 'full'
-                    ? `🔒 Pay in Full — $${totalAmount.toFixed(2).replace('.00', '')}`
-                    : `🔒 Reserve Now — Pay $${depositAmount} Deposit`}
-                </button>
+                {/* Two Checkout Buttons */}
+                {isCheckingOut ? (
+                  <div className="w-full bg-gray-100 text-gray-500 font-bold py-4 px-6 rounded-xl text-center text-lg">
+                    ⏳ Redirecting to secure payment…
+                  </div>
+                ) : !canCheckout ? (
+                  <button
+                    disabled
+                    className="w-full bg-[#f5a623] opacity-40 cursor-not-allowed text-white font-extrabold py-4 px-6 rounded-xl text-lg shadow-lg"
+                  >
+                    {!eventDate
+                      ? 'Select a Date Above to Continue'
+                      : availability === 'checking'
+                      ? 'Checking availability…'
+                      : availability !== 'available'
+                      ? 'Date Unavailable — Choose Another'
+                      : '⚠️ Agree to Waiver to Continue'}
+                  </button>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button
+                      onClick={() => handleCheckout('deposit')}
+                      className="bg-[#f5a623] hover:bg-[#e09610] active:bg-[#c87d00] text-white font-extrabold py-4 px-4 rounded-xl text-base transition-colors shadow-lg text-center"
+                    >
+                      <span className="block text-xs font-semibold opacity-80 mb-0.5">NON-REFUNDABLE</span>
+                      🔒 25% Deposit — ${depositAmount}
+                      <span className="block text-xs font-normal opacity-75 mt-0.5">${(totalAmount - depositAmount).toFixed(2).replace('.00','')} balance due day-of</span>
+                    </button>
+                    <button
+                      onClick={() => handleCheckout('full')}
+                      className="bg-[#1a6fa8] hover:bg-[#155d8e] active:bg-[#0d2340] text-white font-extrabold py-4 px-4 rounded-xl text-base transition-colors shadow-lg text-center"
+                    >
+                      <span className="block text-xs font-semibold opacity-80 mb-0.5">NOTHING DUE DAY-OF</span>
+                      🔒 Pay in Full — ${totalAmount.toFixed(2).replace('.00','')}
+                      <span className="block text-xs font-normal opacity-75 mt-0.5">Complete payment now</span>
+                    </button>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
                   <span>🔒</span>
@@ -657,10 +692,11 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
               {(addonsTotal > 0 || addonFuelCharge || bundlePrice > 0) && (
                 <p className="text-white/60 text-xs mb-1">+ ${(addonsTotal + fuelAmount).toFixed(2).replace('.00', '')} add-ons = ${totalAmount.toFixed(2).replace('.00', '')} total</p>
               )}
-              <p className="text-[#f5a623] font-bold text-sm mb-5">
-                {paymentType === 'full'
-                  ? `$${totalAmount.toFixed(2).replace('.00', '')} to pay in full`
-                  : `$${depositAmount} deposit to reserve`}
+              <p className="text-[#f5a623] font-bold text-sm">
+                ${depositAmount} deposit <span className="text-white/40 font-normal">or</span>
+              </p>
+              <p className="text-white/70 text-sm mb-5">
+                ${totalAmount.toFixed(2).replace('.00', '')} pay in full
               </p>
               <button
                 onClick={scrollToBooking}

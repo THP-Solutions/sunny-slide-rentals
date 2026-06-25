@@ -3,54 +3,35 @@ import { Resend } from 'resend'
 
 export const dynamic = 'force-dynamic'
 
-// Both staff receive lead notifications via GHL workflow
-const NOTIFY_PHONES = ['+12392204067', '+12396349809'] // Junior Barba, Kyle Henderson
+const GHL_BASE = 'https://services.leadconnectorhq.com'
+const GHL_HEADERS = (key: string) => ({
+  'Content-Type': 'application/json',
+  Authorization: 'Bearer ' + key,
+  Version: '2021-07-28',
+})
 
 const resend = new Resend(process.env.RESEND_API_KEY || 'placeholder')
 
-async function createGHLContact(fields: {
-  firstName: string
-  lastName: string
-  email: string
-  phone: string
-  source?: string
-  tags?: string[]
-  customFields?: Record<string, string>
-}) {
-  const apiKey = process.env.GHL_API_KEY
-  if (!apiKey) {
-    console.warn('GHL_API_KEY not set — contact not sent to GHL')
-    return
-  }
+async function createOrGetConversation(apiKey: string, locationId: string, contactId: string): Promise<string | null> {
   try {
-    const res = await fetch('https://services.leadconnectorhq.com/contacts/', {
+    const res = await fetch(`${GHL_BASE}/conversations/`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + apiKey,
-        Version: '2021-07-28',
-      },
-      body: JSON.stringify({
-        firstName: fields.firstName,
-        lastName: fields.lastName,
-        email: fields.email,
-        phone: fields.phone,
-        source: fields.source || 'Website',
-        tags: fields.tags || [],
-        customField: fields.customFields
-          ? Object.entries(fields.customFields).map(([key, value]) => ({ key, value }))
-          : [],
-      }),
+      headers: GHL_HEADERS(apiKey),
+      body: JSON.stringify({ locationId, contactId }),
     })
-    if (!res.ok) {
-      const err = await res.text()
-      console.error('GHL API error:', res.status, err)
-    } else {
-      console.log('GHL contact created:', res.status)
-    }
-  } catch (err) {
-    console.error('GHL API request failed:', err)
-  }
+    const data = await res.json()
+    return data?.conversation?.id ?? data?.id ?? null
+  } catch { return null }
+}
+
+async function addConversationNote(apiKey: string, conversationId: string, message: string) {
+  try {
+    await fetch(`${GHL_BASE}/conversations/messages`, {
+      method: 'POST',
+      headers: GHL_HEADERS(apiKey),
+      body: JSON.stringify({ type: 'Activity', conversationId, message }),
+    })
+  } catch { /* non-critical */ }
 }
 
 export async function POST(req: NextRequest) {
@@ -65,23 +46,61 @@ export async function POST(req: NextRequest) {
   const firstName = nameParts[0] || name
   const lastName = nameParts.slice(1).join(' ') || ''
 
-  // 1. Create contact directly in GHL via API
-  await createGHLContact({
-    firstName,
-    lastName,
-    email,
-    phone,
-    source: 'Website Contact Form',
-    tags: ['contact-form', 'website'],
-    customFields: {
-      event_date: eventDate || '',
-      city: city || '',
-      interest: interest || '',
-      message: message || '',
-    },
-  })
+  const apiKey = process.env.GHL_API_KEY
+  if (apiKey) {
+    try {
+      // 1. Create GHL contact
+      const contactRes = await fetch(`${GHL_BASE}/contacts/`, {
+        method: 'POST',
+        headers: GHL_HEADERS(apiKey),
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          phone,
+          source: 'Website Contact Form',
+          tags: ['contact-form', 'website'],
+          customField: [
+            ...(eventDate ? [{ key: 'event_date', value: eventDate }] : []),
+            ...(city     ? [{ key: 'city',       value: city }]      : []),
+            ...(interest ? [{ key: 'interest',   value: interest }]  : []),
+            ...(message  ? [{ key: 'message',    value: message }]   : []),
+          ],
+        }),
+      })
+      const contactData = await contactRes.json()
+      const contactId: string | undefined  = contactData?.contact?.id
+      const locationId: string | undefined = contactData?.contact?.locationId
 
-  // 2. Notify business via Resend
+      if (!contactRes.ok) {
+        console.error('GHL contact error (contact form):', contactRes.status, contactData)
+      }
+
+      // 2. Create conversation so it appears in GHL Conversations tab
+      if (contactId && locationId) {
+        const conversationId = await createOrGetConversation(apiKey, locationId, contactId)
+        if (conversationId) {
+          const note = [
+            '📋 Website Contact Form',
+            `Name: ${name}`,
+            `Email: ${email}`,
+            `Phone: ${phone}`,
+            eventDate ? `Event Date: ${eventDate}` : '',
+            city      ? `City: ${city}` : '',
+            interest  ? `Interested In: ${interest}` : '',
+            message   ? `Message: ${message}` : '',
+          ].filter(Boolean).join('\n')
+          await addConversationNote(apiKey, conversationId, note)
+        }
+      }
+    } catch (err) {
+      console.error('GHL API request failed (contact):', err)
+    }
+  } else {
+    console.warn('GHL_API_KEY not set — contact form not sent to GHL')
+  }
+
+  // Notify business via Resend email
   try {
     await resend.emails.send({
       from: 'Sunny Slide Rentals <noreply@sunnysliderentals.com>',
@@ -97,8 +116,8 @@ export async function POST(req: NextRequest) {
         '<tr><td style="padding:6px 0;color:#6b7280;font-size:14px">Email</td><td style="padding:6px 0;font-size:14px"><a href="mailto:' + email + '">' + email + '</a></td></tr>' +
         '<tr><td style="padding:6px 0;color:#6b7280;font-size:14px">Phone</td><td style="padding:6px 0;font-size:14px"><a href="tel:' + phone + '">' + phone + '</a></td></tr>' +
         (eventDate ? '<tr><td style="padding:6px 0;color:#6b7280;font-size:14px">Event Date</td><td style="padding:6px 0;font-size:14px">' + eventDate + '</td></tr>' : '') +
-        (city ? '<tr><td style="padding:6px 0;color:#6b7280;font-size:14px">City</td><td style="padding:6px 0;font-size:14px">' + city + '</td></tr>' : '') +
-        (interest ? '<tr><td style="padding:6px 0;color:#6b7280;font-size:14px">Interested In</td><td style="padding:6px 0;font-size:14px">' + interest + '</td></tr>' : '') +
+        (city      ? '<tr><td style="padding:6px 0;color:#6b7280;font-size:14px">City</td><td style="padding:6px 0;font-size:14px">' + city + '</td></tr>' : '') +
+        (interest  ? '<tr><td style="padding:6px 0;color:#6b7280;font-size:14px">Interested In</td><td style="padding:6px 0;font-size:14px">' + interest + '</td></tr>' : '') +
         '</table>' +
         (message ? '<div style="margin-top:16px;padding:12px;background:#fff;border:1px solid #e5e7eb;border-radius:6px"><p style="margin:0;font-size:14px;color:#374151">' + message + '</p></div>' : '') +
         '<div style="margin-top:20px;text-align:center">' +
@@ -108,9 +127,6 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error('Resend error:', err)
   }
-
-  // Log both notify targets — GHL workflow routes to both
-  console.log('Contact form lead — notify:', NOTIFY_PHONES.join(', '))
 
   return NextResponse.json({ ok: true })
 }
