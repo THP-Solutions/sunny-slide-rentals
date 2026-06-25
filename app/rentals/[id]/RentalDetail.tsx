@@ -110,6 +110,11 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setEventAddress(val);
+    // Reset distance if user edits the address
+    if (distanceMiles !== null) {
+      setDistanceMiles(null);
+      setFuelAutoApplied(false);
+    }
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => fetchSuggestions(val), 400);
   };
@@ -129,6 +134,36 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
         setFuelAutoApplied(true);
       } else {
         setFuelAutoApplied(false);
+      }
+    }
+  };
+
+  // Fallback: if user typed instead of picking from dropdown, geocode on blur
+  const handleAddressBlur = async () => {
+    setShowSuggestions(false);
+    if (distanceMiles === null && eventAddress.length >= 10) {
+      try {
+        const url =
+          `https://nominatim.openstreetmap.org/search?` +
+          `q=${encodeURIComponent(eventAddress)}&format=json&countrycodes=us&limit=1&addressdetails=0&extratags=0`;
+        const res = await fetch(url, { headers: { 'Accept-Language': 'en-US,en' } });
+        const data: NominatimResult[] = await res.json();
+        if (data.length > 0) {
+          const lat = parseFloat(data[0].lat);
+          const lon = parseFloat(data[0].lon);
+          if (!isNaN(lat) && !isNaN(lon)) {
+            const miles = haversineMiles(BUSINESS_LAT, BUSINESS_LNG, lat, lon);
+            setDistanceMiles(Math.round(miles));
+            if (miles > FUEL_CHARGE_MILES) {
+              setAddonFuelCharge(true);
+              setFuelAutoApplied(true);
+            } else {
+              setFuelAutoApplied(false);
+            }
+          }
+        }
+      } catch {
+        // silent fail — user can manually toggle fuel charge if needed
       }
     }
   };
@@ -387,7 +422,7 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                 {/* Party Package Bundles */}
                 <div className="mt-6 mb-2">
                   <p className="text-sm font-bold text-[#0d2340] mb-1">🎪 Party Package Bundles</p>
-                  <p className="text-xs text-gray-400 mb-3">Add a tent, tables & chairs bundle to any rental. Select one or skip.</p>
+                  <p className="text-xs text-gray-400 mb-3">Add a tent, tables &amp; chairs bundle to any rental. Select one or skip.</p>
                   <div className="space-y-3">
                     {PARTY_PACKAGES.map((pkg) => {
                       const selected = selectedBundle === pkg.id;
@@ -535,6 +570,7 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                     value={eventAddress}
                     onChange={handleAddressChange}
                     onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                    onBlur={handleAddressBlur}
                     placeholder="Start typing your address…"
                     autoComplete="off"
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-[#0d2340] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1a6fa8] focus:border-transparent transition"
@@ -690,7 +726,7 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
               <p className="text-3xl font-extrabold">${rental.price}</p>
               <p className="text-white/50 text-sm mb-1">per day</p>
               {(addonsTotal > 0 || addonFuelCharge || bundlePrice > 0) && (
-                <p className="text-white/60 text-xs mb-1">+ ${(addonsTotal + fuelAmount).toFixed(2).replace('.00', '')} add-ons = ${totalAmount.toFixed(2).replace('.00', '')} total</p>
+                <p className="text-white/60 text-xs mb-1">+ ${(addonsTotal + fuelAmount + bundlePrice).toFixed(2).replace('.00', '')} add-ons = ${totalAmount.toFixed(2).replace('.00', '')} total</p>
               )}
               <p className="text-[#f5a623] font-bold text-sm">
                 ${depositAmount} deposit <span className="text-white/40 font-normal">or</span>

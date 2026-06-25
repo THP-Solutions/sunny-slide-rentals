@@ -37,8 +37,9 @@ export async function POST(req: NextRequest) {
     }
 
     const fuelCharge = addonFuelCharge ? 39.99 : 0
+    const bundleCharge = partyBundle > 0 ? Number(partyBundle) : 0
     const addonsTotal =
-      addonTables * 10 + addonChairs * 3 + addonTent * 59 + addonGenerator * 75 + fuelCharge
+      addonTables * 10 + addonChairs * 3 + addonTent * 59 + addonGenerator * 75 + fuelCharge + bundleCharge
     const totalAmount = rental.price + addonsTotal
 
     // Payment amount: full or 25% deposit (min $100)
