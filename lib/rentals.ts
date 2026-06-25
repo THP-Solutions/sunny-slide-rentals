@@ -207,6 +207,50 @@ export const ADDONS: Addon[] = [
   { id: 'generator', name: 'Generator (if no outlet within 100ft)', price: 75, unit: 'flat', max: 1 },
 ];
 
+export interface PartyPackage {
+  id: string;
+  name: string;
+  tent: string;
+  tables: number;
+  chairs: number;
+  guests: number;
+  price: number; // add-on price on top of unit
+  color: string;
+}
+
+export const PARTY_PACKAGES: PartyPackage[] = [
+  {
+    id: 'pkg-1',
+    name: 'Party Package 1',
+    tent: '10×20 Frame Tent',
+    tables: 2,
+    chairs: 18,
+    guests: 18,
+    price: 150,
+    color: 'blue',
+  },
+  {
+    id: 'pkg-2',
+    name: 'Party Package 2',
+    tent: '10×30 Frame Tent',
+    tables: 3,
+    chairs: 27,
+    guests: 27,
+    price: 250,
+    color: 'orange',
+  },
+  {
+    id: 'pkg-3',
+    name: 'Party Package 3',
+    tent: '16×32 Frame Tent',
+    tables: 6,
+    chairs: 50,
+    guests: 50,
+    price: 450,
+    color: 'purple',
+  },
+];
+
 export function getRentalById(id: string): Rental | undefined {
   return RENTALS.find((r) => r.id === id);
 }

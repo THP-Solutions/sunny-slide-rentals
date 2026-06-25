@@ -3,6 +3,9 @@ import { Resend } from 'resend'
 
 export const dynamic = 'force-dynamic'
 
+// Both staff receive lead notifications via GHL workflow
+const NOTIFY_PHONES = ['+12392204067', '+12396349809'] // Junior Barba, Kyle Henderson
+
 const resend = new Resend(process.env.RESEND_API_KEY || 'placeholder')
 
 async function createGHLContact(fields: {
@@ -105,6 +108,9 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error('Resend error:', err)
   }
+
+  // Log both notify targets — GHL workflow routes to both
+  console.log('Contact form lead — notify:', NOTIFY_PHONES.join(', '))
 
   return NextResponse.json({ ok: true })
 }

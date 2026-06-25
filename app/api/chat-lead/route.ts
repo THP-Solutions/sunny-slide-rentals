@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
+// Both contacts receive GHL lead notifications
+const NOTIFY_PHONES = ['+12392204067', '+12396349809'] // Junior, Kyle
+
 export async function POST(req: NextRequest) {
   const { name, phone, source } = await req.json()
 
@@ -19,6 +22,7 @@ export async function POST(req: NextRequest) {
   const firstName = nameParts[0] || name
   const lastName = nameParts.slice(1).join(' ') || ''
 
+  // Create GHL contact (triggers the workflow which notifies the team)
   try {
     const res = await fetch('https://services.leadconnectorhq.com/contacts/', {
       method: 'POST',
@@ -42,6 +46,9 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error('GHL API request failed (chat-lead):', err)
   }
+
+  // Log both notify targets so GHL workflow can route to both
+  console.log('Chat lead received — notify:', NOTIFY_PHONES.join(', '), '| Lead:', name, phone)
 
   return NextResponse.json({ ok: true })
 }

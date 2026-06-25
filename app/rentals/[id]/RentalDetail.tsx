@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRef, useState, useCallback, useEffect } from 'react';
 import type { Rental } from '@/lib/rentals';
-import { ADDONS } from '@/lib/rentals';
+import { ADDONS, PARTY_PACKAGES } from '@/lib/rentals';
 import { calcAddonsTotal, calcTotal, baseDeposit } from '@/lib/cart';
 
 interface Props {
@@ -41,6 +41,9 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
   const [eventAddress, setEventAddress] = useState('');
   const [availability, setAvailability] = useState<AvailabilityStatus>('idle');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+
+  // Party bundle
+  const [selectedBundle, setSelectedBundle] = useState<string | null>(null);
 
   // Payment options
   const [paymentType, setPaymentType] = useState<'deposit' | 'full'>('deposit');
@@ -139,10 +142,12 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
     eventAddress,
   };
 
+  const bundle = PARTY_PACKAGES.find((p) => p.id === selectedBundle);
+  const bundlePrice = bundle ? bundle.price : 0;
   const addonsTotal = calcAddonsTotal(selection);
   const baseTotal = calcTotal(selection);
   const fuelAmount = addonFuelCharge ? 39.99 : 0;
-  const totalAmount = baseTotal + fuelAmount;
+  const totalAmount = baseTotal + fuelAmount + bundlePrice;
   const depositAmount = Math.max(100, Math.ceil(totalAmount * 0.25));
   const chargeAmount = paymentType === 'full' ? totalAmount : depositAmount;
   const staticDeposit = baseDeposit(rental.price);
@@ -165,6 +170,8 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
           addonTent: quantities.tent ?? 0,
           addonGenerator: quantities.generator ?? 0,
           addonFuelCharge,
+          partyBundle: bundlePrice,
+          partyBundleName: bundle ? bundle.name : '',
           paymentType,
           eventAddress,
         }),
@@ -342,6 +349,44 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                   );
                 })}
 
+                {/* Party Package Bundles */}
+                <div className="mt-6 mb-2">
+                  <p className="text-sm font-bold text-[#0d2340] mb-1">🎪 Party Package Bundles</p>
+                  <p className="text-xs text-gray-400 mb-3">Add a tent, tables & chairs bundle to any rental. Select one or skip.</p>
+                  <div className="space-y-3">
+                    {PARTY_PACKAGES.map((pkg) => {
+                      const selected = selectedBundle === pkg.id;
+                      const colorMap: Record<string, string> = {
+                        blue: 'border-[#1a6fa8] bg-blue-50',
+                        orange: 'border-[#f5a623] bg-yellow-50',
+                        purple: 'border-purple-500 bg-purple-50',
+                      };
+                      const activeClass = selected ? colorMap[pkg.color] : 'border-gray-200 bg-gray-50 hover:border-gray-300';
+                      return (
+                        <button
+                          key={pkg.id}
+                          type="button"
+                          onClick={() => setSelectedBundle(selected ? null : pkg.id)}
+                          className={`w-full text-left p-4 rounded-xl border-2 transition-all ${activeClass}`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-bold text-[#0d2340] text-sm">{pkg.name}</p>
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                {pkg.tent} · {pkg.tables} Tables · {pkg.chairs} Chairs · Up to {pkg.guests} guests
+                              </p>
+                            </div>
+                            <div className="text-right flex-shrink-0 ml-3">
+                              <p className="font-extrabold text-lg text-[#f5a623]">+${pkg.price}</p>
+                              {selected && <p className="text-xs text-green-700 font-semibold">✓ Selected</p>}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* Fuel Charge add-on */}
                 <div
                   className={`flex items-center gap-3 p-4 rounded-xl border transition-colors cursor-pointer ${
@@ -368,10 +413,10 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                 </div>
               </div>
 
-              {(addonsTotal > 0 || addonFuelCharge) && (
+              {(addonsTotal > 0 || addonFuelCharge || bundlePrice > 0) && (
                 <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex justify-between items-center">
                   <span className="font-semibold text-[#0d2340] text-sm">Add-ons Total</span>
-                  <span className="text-xl font-extrabold text-[#f5a623]">+${(addonsTotal + fuelAmount).toFixed(2).replace('.00', '')}</span>
+                  <span className="text-xl font-extrabold text-[#f5a623]">+${(addonsTotal + fuelAmount + bundlePrice).toFixed(2).replace('.00', '')}</span>
                 </div>
               )}
             </section>
@@ -511,6 +556,12 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                         <span className="font-semibold text-[#0d2340]">+${addonsTotal}</span>
                       </div>
                     )}
+                    {bundle && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">🎪 {bundle.name}</span>
+                        <span className="font-semibold text-[#0d2340]">+${bundle.price}</span>
+                      </div>
+                    )}
                     {addonFuelCharge && (
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">⛽ Fuel Charge</span>
@@ -603,7 +654,7 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
             <div className="bg-[#0d2340] rounded-2xl p-6 text-white sticky top-20">
               <p className="text-3xl font-extrabold">${rental.price}</p>
               <p className="text-white/50 text-sm mb-1">per day</p>
-              {(addonsTotal > 0 || addonFuelCharge) && (
+              {(addonsTotal > 0 || addonFuelCharge || bundlePrice > 0) && (
                 <p className="text-white/60 text-xs mb-1">+ ${(addonsTotal + fuelAmount).toFixed(2).replace('.00', '')} add-ons = ${totalAmount.toFixed(2).replace('.00', '')} total</p>
               )}
               <p className="text-[#f5a623] font-bold text-sm mb-5">

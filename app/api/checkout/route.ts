@@ -25,6 +25,8 @@ export async function POST(req: NextRequest) {
       addonTent = 0,
       addonGenerator = 0,
       addonFuelCharge = false,   // $39.99 if delivery > 20 miles
+      partyBundle = 0,           // 0, 150, 250, or 450
+      partyBundleName = '',      // e.g. 'Party Package 2'
       paymentType = 'deposit',   // 'deposit' | 'full'
       eventAddress = '',
     } = body
@@ -52,6 +54,7 @@ export async function POST(req: NextRequest) {
       addonTables  > 0 ? `${addonTables}× 8ft Table${addonTables > 1 ? 's' : ''} (+$${addonTables * 10})` : '',
       addonChairs  > 0 ? `${addonChairs}× Chair${addonChairs > 1 ? 's' : ''} (+$${addonChairs * 3})` : '',
       addonTent    > 0 ? '1× 16×32 Frame Tent (+$59)' : '',
+      partyBundle  > 0 ? `${partyBundleName} (+$${partyBundle})` : '',
       addonGenerator > 0 ? '1× Generator (+$75)' : '',
       addonFuelCharge   ? 'Fuel Charge (+$39.99)' : '',
     ].filter(Boolean).join(', ')
@@ -97,6 +100,8 @@ export async function POST(req: NextRequest) {
         addonTent:    String(addonTent),
         addonGenerator: String(addonGenerator),
         addonFuelCharge: String(addonFuelCharge),
+        partyBundle: String(partyBundle),
+        partyBundleName,
         paymentType,
         totalAmount:  String(totalAmount),
         chargeAmount: String(chargeAmount),

@@ -92,7 +92,15 @@ export default function Footer() {
             </h3>
             <ul className="space-y-3 mb-5">
               <li>
-                <a href="sms:+12392204067" className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+                <a href="tel:+12396349809" className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+                <span>📞</span>
+                <span>Kyle: (239) 634-9809</span>
+              </a>
+              <a href="tel:+12392204067" className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+                <span>📞</span>
+                <span>Junior: (239) 220-4067</span>
+              </a>
+              <a href="sms:+12392204067" className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
                   <span>📱</span> {t('Text Us', 'Escríbenos')}
                 </a>
               </li>
