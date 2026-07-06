@@ -40,17 +40,16 @@ export const RENTALS: Rental[] = [
   {
     id: 'freedoms-fury',
     name: "Freedom's Fury",
-    price: 999, // TODO: confirm price with Daniel
-    deposit: 250,
+    price: 700,
+    deposit: 175,
     category: 'Water Slides',
     dimensions: "75' L × 18' W × 22' H",
     wetDry: 'Wet/Dry',
     rentalHours: 9,
     description:
       "The ultimate patriotic thrill ride! Freedom's Fury is a massive obstacle course combo featuring a towering water slide, long slip-n-slide run, and dual splash pools — dressed in red, white, and blue. Perfect for school events, large birthday parties, and corporate outings.",
-    image: '/images/freedoms-fury.jpg',
+    image: '/images/freedoms-fury-1.jpeg',
     calendarId: '',
-    hidden: true, // TODO: set price, add images, then remove hidden flag
   },
   {
     id: 'shark-attack-splash',
