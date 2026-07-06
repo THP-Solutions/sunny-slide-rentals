@@ -1,239 +1,85 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
-import Link from 'next/link'
-
-type Mode = 'chat' | 'askName' | 'askPhone' | 'done'
-
 interface Msg {
   id: number
   from: 'bot' | 'user'
   text: string
-  link?: { label: string; href: string }
-  showCta?: boolean
+}
+
+interface HistoryMsg {
+  role: 'user' | 'assistant'
+  content: string
 }
 
 const QUICK_REPLIES = ['🎂 Birthday Party', '🏫 School Event', '💰 Pricing', '📍 Service Area']
-
-const YES_WORDS = ['yes', 'yep', 'yeah', 'yup', 'sure', 'ok', 'okay', 'please',
-  "let's", 'lets', 'do it', 'sounds good', 'absolutely', 'definitely',
-  'of course', 'for sure', 'go ahead', 'sure thing', 'totally']
-
-const CONTACT_WORDS = ['my number', 'call me', 'text me', 'reach out',
-  'contact me', 'just ask', 'have someone', 'send someone', 'get back to me']
-
-const isYes = (s: string) => YES_WORDS.some(w => s.toLowerCase().includes(w))
-const wantsContact = (s: string) => CONTACT_WORDS.some(w => s.toLowerCase().includes(w))
-
-interface Answer {
-  text: string
-  link?: { label: string; href: string }
-  cta: boolean
-  catchAll?: boolean   // true = user is answering a bot question, not asking one
-}
-
-function getAnswer(input: string): Answer {
-  const t = input.toLowerCase().trim()
-
-  // Numbers, crowd sizes, ages — answers to bot follow-up questions
-  if (/^\d[\d+\- ]*$|^\d+\s*(kids?|children|people|guests?|yr|years?|attendees?|\+|-)/.test(t) ||
-      /^(about|around|maybe|roughly|approximately)\s+\d/.test(t))
-    return {
-      text: '',   // handled inline — triggers lead capture
-      cta: true,
-      catchAll: true,
-    }
-
-  if (/price|cost|how much|pricing|rates?|fee|afford|budget/.test(t))
-    return {
-      text: 'Rentals start at $300 and go up to $725 for our biggest slide. A 25% deposit locks your date — balance due day-of. Want me to have someone text you a quote?',
-      link: { label: 'See all pricing →', href: '/rentals' },
-      cta: true,
-    }
-
-  if (/labelle|la belle|naples|bonita|estero|lehigh|service area|do you (serve|service|cover)|what (area|cities)|how far|where (are|do)/.test(t))
-    return {
-      text: 'Yes! We cover all of SW Florida — Cape Coral, Fort Myers, Lehigh Acres, LaBelle, Estero, Naples, and more. Trips over 20 miles have a small fuel charge. What city is your event in?',
-      link: { label: 'See service area →', href: '/service-areas' },
-      cta: true,
-    }
-
-  if (/available|avail|this (sun|mon|tue|wed|thu|fri|sat)|june|july|aug|sept|open|calendar|weekend|what date|what day/.test(t))
-    return {
-      text: 'Summer weekends book fast! Pick your slide and the calendar shows real-time availability. What date are you planning for?',
-      link: { label: 'Check availability →', href: '/rentals' },
-      cta: true,
-    }
-
-  if (/birthday|bday/.test(t))
-    return {
-      text: 'Birthday parties are our specialty 🎂 The Tiki Tsunami (27 ft tall) and Shark Attack are crowd favorites for ages 5+. How old are the birthday kids? I\'ll match you to the right slide.',
-      link: { label: 'Browse birthday setups →', href: '/rentals' },
-      cta: true,
-    }
-
-  if (/school|church|communit|block party|neighbor|nonprofit|grad/.test(t))
-    return {
-      text: "School and community events are our jam — we've done hundreds. The key is matching capacity to your crowd. How many kids are you expecting?",
-      link: { label: 'View large event options →', href: '/rentals' },
-      cta: true,
-    }
-
-  if (/corporate|company|work|office|team|employ|business/.test(t))
-    return {
-      text: "A water slide at a corporate event is a power move 💪 Your team will talk about it for years. What's the headcount? We'll package exactly what you need.",
-      link: { label: 'View party packages →', href: '/rentals' },
-      cta: true,
-    }
-
-  if (/setup|set.?up|install|deliver|pickup|pick.?up|tear.?down|bring|transport|includ/.test(t))
-    return {
-      text: "We handle everything — delivery, professional setup, safety check, and full teardown. You don't lift a finger. All included in the price.",
-      cta: true,
-    }
-
-  if (/how long|hours?|duration|all day|whole day|rental period/.test(t))
-    return {
-      text: 'Up to 8 hours — we set up before your guests arrive and pick up after they leave. What time does your event start?',
-      cta: true,
-    }
-
-  if (/tiki|tsunami|shark|yeti|riptide|biggest|tallest|largest|combo|bounce/.test(t))
-    return {
-      text: 'The Tiki Tsunami (63 ft long, 27 ft tall) is our flagship. The Shark Attack at 52 ft is a fan favorite. Want someone to walk you through the best fit for your event?',
-      link: { label: 'See all slides →', href: '/rentals' },
-      cta: true,
-    }
-
-  if (/package|bundle|table|chair|tent|generator|add.?on|everything/.test(t))
-    return {
-      text: "Party Packages bundle the slide with tables, chairs, and a tent — one delivery, everything handled. Most customers say it's the easiest party they've ever thrown. Want details?",
-      link: { label: 'See party packages →', href: '/rentals' },
-      cta: true,
-    }
-
-  if (/waiver|liabilit|safety|insur/.test(t))
-    return {
-      text: 'Safety is our #1 priority. Every unit is professionally inspected and we carry full liability insurance. Digital waiver is quick and easy.',
-      link: { label: 'View waiver →', href: '/waiver' },
-      cta: false,
-    }
-
-  if (/deposit|refund|cancel|payment/.test(t))
-    return {
-      text: '25% deposit holds your date — minimum $100. Balance is due day-of. Life happens, we work with you if you need to reschedule.',
-      cta: true,
-    }
-
-  // Catch-all — marks that user is answering a bot question, not asking a new one
-  return {
-    text: "Got it! Our team can get you exactly what you need — they reply fast. Want me to have someone text you?",
-    link: { label: 'Or browse rentals →', href: '/rentals' },
-    cta: true,
-    catchAll: true,
-  }
-}
-
-// ── Component ────────────────────────────────────────────────────────────────
+const LEAD_RE = /LEAD_CAPTURED:\s*(\{[^}]+\})/
 
 export default function ChatBot() {
-  const [open, setOpen]             = useState(false)
-  const [mode, setMode]             = useState<Mode>('chat')
-  const [msgs, setMsgs]             = useState<Msg[]>([{
+  const [open, setOpen]       = useState(false)
+  const [msgs, setMsgs]       = useState<Msg[]>([{
     id: 0, from: 'bot',
-    text: "Hey! I'm Sunny 🌞 What kind of event are you planning? Tell me a bit and I'll make sure you get the perfect setup.",
+    text: "Hey! I'm Sunny 🌞 What kind of event are you planning? I'll make sure you get the perfect setup.",
   }])
-  const [input, setInput]           = useState('')
-  const [leadName, setLeadName]     = useState('')
-  const [offerShown, setOfferShown] = useState(false)
+  const [history, setHistory] = useState<HistoryMsg[]>([])
+  const [input, setInput]     = useState('')
+  const [loading, setLoading] = useState(false)
+  const [done, setDone]       = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef  = useRef<HTMLInputElement>(null)
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs])
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs, loading])
   useEffect(() => { if (open) setTimeout(() => inputRef.current?.focus(), 150) }, [open])
 
-  const push = (m: Omit<Msg, 'id'>) =>
+  const pushMsg = (m: Omit<Msg, 'id'>) =>
     setMsgs(prev => [...prev, { ...m, id: prev.length }])
 
-  const goToLead = (pretext?: string) => {
-    setMode('askName')
-    setOfferShown(true)
-    setTimeout(() => push({
-      from: 'bot',
-      text: pretext ?? "Awesome! 🙌 What's your name?",
-    }), 400)
-  }
-
-  const handleSend = (override?: string) => {
+  const send = async (override?: string) => {
     const text = (override ?? input).trim()
-    if (!text) return
+    if (!text || loading || done) return
     setInput('')
-    push({ from: 'user', text })
+    pushMsg({ from: 'user', text })
+    setLoading(true)
 
-    // ── Lead flow ────────────────────────────────────────────────────────────
-    if (mode === 'askName') {
-      setLeadName(text)
-      setMode('askPhone')
-      setTimeout(() =>
-        push({ from: 'bot', text: `Nice to meet you, ${text}! 🤝 What's the best number to text you?` }),
-        400)
-      return
-    }
+    const nextHistory: HistoryMsg[] = [...history, { role: 'user', content: text }]
 
-    if (mode === 'askPhone') {
-      const name = leadName
-      setMode('done')
-      setTimeout(() =>
-        push({
-          from: 'bot',
-          text: `Done! 🔥 ${name}, our team will text you shortly. Browse while you wait!`,
-          link: { label: 'Browse rentals →', href: '/rentals' },
-        }),
-        400)
-      fetch('/api/chat-lead', {
+    try {
+      const res  = await fetch('/api/chatbot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone: text, source: 'Sunny Chatbot' }),
-      }).catch(() => {})
-      return
+        body: JSON.stringify({ messages: nextHistory }),
+      })
+      const data = await res.json()
+      const raw: string = data.text ?? "I'm having a quick hiccup — text us at (239) 220-4067!"
+
+      // Check for lead capture signal
+      const match = LEAD_RE.exec(raw)
+      if (match) {
+        try {
+          const lead = JSON.parse(match[1]) as { name?: string; phone?: string }
+          const display = raw.replace(LEAD_RE, '').trim()
+          pushMsg({ from: 'bot', text: display || `Done! 🔥 ${lead.name ?? 'Friend'}, our team will text you shortly!` })
+          setDone(true)
+          // Submit to GHL
+          fetch('/api/chat-lead', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: lead.name ?? '', phone: lead.phone ?? '', source: 'Sunny Chatbot (AI)' }),
+          }).catch(() => {})
+        } catch {
+          pushMsg({ from: 'bot', text: raw.replace(LEAD_RE, '').trim() })
+        }
+      } else {
+        pushMsg({ from: 'bot', text: raw })
+      }
+
+      setHistory([...nextHistory, { role: 'assistant', content: raw }])
+    } catch {
+      pushMsg({ from: 'bot', text: "Quick hiccup on my end — text us at (239) 220-4067 and we'll reply fast!" })
+    } finally {
+      setLoading(false)
     }
-
-    // ── Chat mode ────────────────────────────────────────────────────────────
-
-    // Explicit contact request
-    if (wantsContact(text)) {
-      goToLead("Of course! What's your name?")
-      return
-    }
-
-    // "Yes/sure/please" after offer was already made
-    if (offerShown && isYes(text)) {
-      goToLead()
-      return
-    }
-
-    // Q&A
-    const resp = getAnswer(text)
-
-    // If offer already shown and user sent a follow-up answer (catch-all) → capture lead
-    if (offerShown && resp.catchAll) {
-      goToLead("Perfect! Let me have someone from our team reach out with the right setup. What's your name?")
-      return
-    }
-
-    const showCta = resp.cta && !offerShown
-    if (showCta) setOfferShown(true)
-
-    setTimeout(() =>
-      push({ from: 'bot', text: resp.text, link: resp.link, showCta }),
-      500)
   }
 
-  const acceptLead = () => {
-    push({ from: 'bot', text: "Awesome! 🙌 What's your name?" })
-    setMode('askName')
-  }
-
-  // ── Closed bubble ─────────────────────────────────────────────────────────
   if (!open) return (
     <button
       onClick={() => setOpen(true)}
@@ -245,7 +91,6 @@ export default function ChatBot() {
     </button>
   )
 
-  // ── Chat window ───────────────────────────────────────────────────────────
   return (
     <div
       className="fixed bottom-6 right-6 z-50 flex flex-col rounded-2xl shadow-2xl overflow-hidden bg-white"
@@ -256,20 +101,12 @@ export default function ChatBot() {
         className="flex items-center gap-3 px-4 py-3 shrink-0"
         style={{ background: 'linear-gradient(135deg, #1a6fa8, #0d2340)' }}
       >
-        <div className="w-9 h-9 rounded-full bg-yellow-400 flex items-center justify-center text-lg shrink-0">
-          🌞
-        </div>
+        <div className="w-9 h-9 rounded-full bg-yellow-400 flex items-center justify-center text-lg shrink-0">🌞</div>
         <div className="flex-1 min-w-0">
           <p className="text-white font-bold text-sm">Sunny</p>
           <p className="text-blue-200 text-xs">Sunny Slide Rentals · Replies instantly</p>
         </div>
-        <button
-          onClick={() => setOpen(false)}
-          className="text-white/70 hover:text-white text-2xl leading-none ml-1"
-          aria-label="Close chat"
-        >
-          ×
-        </button>
+        <button onClick={() => setOpen(false)} className="text-white/70 hover:text-white text-2xl leading-none ml-1" aria-label="Close">×</button>
       </div>
 
       {/* Messages */}
@@ -278,40 +115,18 @@ export default function ChatBot() {
           <div key={m.id} className={`flex ${m.from === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
               className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
-                m.from === 'user'
-                  ? 'rounded-br-sm'
-                  : 'bg-white rounded-bl-sm shadow-sm border border-gray-100'
+                m.from === 'user' ? 'rounded-br-sm' : 'bg-white rounded-bl-sm shadow-sm border border-gray-100'
               }`}
               style={m.from === 'user' ? { background: '#1a6fa8', color: '#fff' } : { color: '#1f2937' }}
             >
               {m.text}
-
-              {m.link && (
-                <Link
-                  href={m.link.href}
-                  className="block mt-1 text-xs font-semibold underline"
-                  style={{ color: m.from === 'user' ? '#bfe0ff' : '#1a6fa8' }}
-                >
-                  {m.link.label}
-                </Link>
-              )}
-
-              {m.showCta && mode === 'chat' && (
-                <button
-                  onClick={acceptLead}
-                  className="mt-2 w-full text-xs font-bold py-2 px-3 rounded-lg text-white transition-opacity hover:opacity-90"
-                  style={{ background: '#f5a623' }}
-                >
-                  📱 Yes, text me!
-                </button>
-              )}
-
-              {m.id === 0 && mode === 'chat' && (
+              {/* Quick replies only on opening message, before any user input */}
+              {m.id === 0 && msgs.length === 1 && !done && (
                 <div className="mt-2 flex flex-wrap gap-1">
                   {QUICK_REPLIES.map(q => (
                     <button
                       key={q}
-                      onClick={() => handleSend(q)}
+                      onClick={() => send(q)}
                       className="text-xs px-2 py-1 rounded-full border text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
                       style={{ borderColor: '#bfdbfe' }}
                     >
@@ -323,6 +138,18 @@ export default function ChatBot() {
             </div>
           </div>
         ))}
+
+        {/* Typing indicator */}
+        {loading && (
+          <div className="flex justify-start">
+            <div className="bg-white rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm border border-gray-100 flex gap-1 items-center">
+              <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+              <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+          </div>
+        )}
+
         <div ref={bottomRef} />
       </div>
 
@@ -332,19 +159,14 @@ export default function ChatBot() {
           ref={inputRef}
           value={input}
           onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
-          placeholder={
-            mode === 'askName'  ? 'Your first name…' :
-            mode === 'askPhone' ? 'Your phone number…' :
-            mode === 'done'     ? "✅ We'll be in touch!" :
-            'Ask anything…'
-          }
-          disabled={mode === 'done'}
+          onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
+          placeholder={done ? "✅ Our team will be in touch!" : loading ? "Sunny is typing…" : "Ask anything…"}
+          disabled={done || loading}
           className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400"
         />
         <button
-          onClick={() => handleSend()}
-          disabled={mode === 'done' || !input.trim()}
+          onClick={() => send()}
+          disabled={done || loading || !input.trim()}
           className="rounded-xl px-4 py-2 text-white font-bold text-sm disabled:opacity-40 transition-opacity hover:opacity-90"
           style={{ background: '#1a6fa8' }}
         >

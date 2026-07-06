@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { createServiceClient } from '@/lib/supabase'
 
 
 export const dynamic = 'force-dynamic'
@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Check if there is already a confirmed or pending booking for this rental+date
+  const supabase = createServiceClient()
   const { count, error } = await supabase
     .from('bookings')
     .select('id', { count: 'exact', head: true })

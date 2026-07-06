@@ -185,6 +185,7 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
     setAvailability('checking');
     try {
       const res = await fetch(`/api/availability?rentalId=${rental.id}&date=${date}`);
+      if (!res.ok) { setAvailability('error'); return; }
       const data = await res.json();
       setAvailability(data.available ? 'available' : 'unavailable');
     } catch {
