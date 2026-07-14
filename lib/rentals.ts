@@ -80,8 +80,8 @@ export const RENTALS: Rental[] = [
     calendarId: 'guQnUYVaBIibEtLzOphS',
   },
   {
-    id: 'rip-curl',
-    name: 'Rip Curl',
+    id: 'gamefly',
+    name: 'Gamefly',
     price: 375,
     deposit: 94,
     category: 'Water Slides',
@@ -89,9 +89,23 @@ export const RENTALS: Rental[] = [
     wetDry: 'Wet/Dry',
     rentalHours: 9,
     description:
-      "Race your friends to the finish line! This dual-lane water slide ends in a long slip-n-slide for the ultimate competitive splash down.",
-    image: '/images/rip-curl.jpeg',
+      "Get in the game! The Gamefly is a thrilling dual-lane water slide featuring a steep drop and a competitive race to the splash pool. Perfect for head-to-head challenges at any event.",
+    image: '/images/riptide-rush-dual-lane.jpg',
     calendarId: 'UvJuHUWYvhA7NxF9smrV',
+  },
+  {
+    id: 'rip-curl',
+    name: 'Rip Curl',
+    price: 350,
+    deposit: 88,
+    category: 'Water Slides',
+    dimensions: "37' L × 19' W × 19' H",
+    wetDry: 'Wet/Dry',
+    rentalHours: 9,
+    description:
+      "Catch the wave! The Rip Curl is a tropical dual-lane water slide with towering palm trees, two thrilling lanes, and a massive splash pool — the perfect setup for a competitive splash-down in true Florida style.",
+    image: '/images/rip-curl.jpeg',
+    calendarId: '',
   },
   {
     id: 'baja-blast-hybrid',
@@ -174,7 +188,7 @@ export const RENTALS: Rental[] = [
     rentalHours: 9,
     description:
       "Everything you need for seating and shade. 16×32 tent, 8ft tables, and white folding chairs — delivered and set up.",
-    image: '/images/tiki-tsunami-mega-splash.jpg',
+    image: '/images/party-tent.jpeg',
     calendarId: '5ZfM2NUPUmL0SzV4LRyu',
   },
   {
@@ -188,7 +202,7 @@ export const RENTALS: Rental[] = [
     rentalHours: 9,
     description:
       "The ultimate party bundle! Choose any water slide or combo unit + 16×32 tent, 8ft tables, and white chairs. Everything delivered and set up — you just show up.",
-    image: '/images/akua-falls-dual-lane-combo.jpg',
+    image: '/images/party-tent.jpeg',
     calendarId: 'guQnUYVaBIibEtLzOphS',
   },
   {
@@ -218,7 +232,7 @@ export const CATEGORIES = [
 export const ADDONS: Addon[] = [
   { id: 'tables', name: '8ft Folding Tables', price: 10, unit: 'each', max: 20 },
   { id: 'chairs', name: 'White Folding Chairs', price: 3, unit: 'each', max: 100 },
-  { id: 'tent', name: '16×32 Frame Tent', price: 59, unit: 'flat', max: 1 },
+  { id: 'tent', name: '16×32 Frame Tent', price: 259, unit: 'flat', max: 1 },
   { id: 'generator', name: 'Generator (if no outlet within 100ft)', price: 75, unit: 'flat', max: 1 },
 ];
 

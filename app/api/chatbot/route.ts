@@ -15,7 +15,7 @@ BUSINESS FACTS (use only these — never invent):
 - Fuel charge: $39.99 for deliveries over 20 miles from Cape Coral
 - Popular slides: Tiki Tsunami ($725, 27 ft tall), Shark Attack ($575, 24 ft tall), Yeti's Peak ($425), Riptide Rush dual-lane ($450)
 - Party Packages bundle slides with tables, chairs, and a tent: Package 1 (+$150), Package 2 (+$250), Package 3 (+$450)
-- Phone: (239) 220-4067
+- Phone: (239) 634-9809
 
 YOUR RULES:
 1. Keep every reply SHORT — 2 sentences max unless the question genuinely needs more
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    return NextResponse.json({ text: "Hey! Our team can answer your questions directly — text us at (239) 220-4067 and we'll get back to you fast." })
+    return NextResponse.json({ text: "Hey! Our team can answer your questions directly — text us at (239) 634-9809 and we'll get back to you fast." })
   }
 
   try {
@@ -49,6 +49,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ text })
   } catch (err) {
     console.error('Chatbot API error:', err)
-    return NextResponse.json({ text: "I'm having a quick hiccup — text us directly at (239) 220-4067 and we'll get you sorted fast!" })
+    return NextResponse.json({ text: "I'm having a quick hiccup — text us directly at (239) 634-9809 and we'll get you sorted fast!" })
   }
 }

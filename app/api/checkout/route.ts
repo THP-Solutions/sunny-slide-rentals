@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   const stripeKey = process.env.STRIPE_SECRET_KEY
   if (!stripeKey || stripeKey.startsWith('sk_test_YOUR') || stripeKey === '') {
     return NextResponse.json(
-      { error: 'Online booking is temporarily unavailable. Please text us at (239) 220-4067 to reserve your date.' },
+      { error: 'Online booking is temporarily unavailable. Please text us at (239) 634-9809 to reserve your date.' },
       { status: 503 },
     )
   }
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
     console.error('Stripe checkout error:', err)
     const message = err instanceof Error ? err.message : 'Payment setup failed.'
     return NextResponse.json(
-      { error: `${message} Please text us at (239) 220-4067 to book.` },
+      { error: `${message} Please text us at (239) 634-9809 to book.` },
       { status: 500 },
     )
   }

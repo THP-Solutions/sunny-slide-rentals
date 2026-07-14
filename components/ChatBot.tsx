@@ -49,7 +49,7 @@ export default function ChatBot() {
         body: JSON.stringify({ messages: nextHistory }),
       })
       const data = await res.json()
-      const raw: string = data.text ?? "I'm having a quick hiccup — text us at (239) 220-4067!"
+      const raw: string = data.text ?? "I'm having a quick hiccup — text us at (239) 634-9809!"
 
       // Check for lead capture signal
       const match = LEAD_RE.exec(raw)
@@ -74,7 +74,7 @@ export default function ChatBot() {
 
       setHistory([...nextHistory, { role: 'assistant', content: raw }])
     } catch {
-      pushMsg({ from: 'bot', text: "Quick hiccup on my end — text us at (239) 220-4067 and we'll reply fast!" })
+      pushMsg({ from: 'bot', text: "Quick hiccup on my end — text us at (239) 634-9809 and we'll reply fast!" })
     } finally {
       setLoading(false)
     }

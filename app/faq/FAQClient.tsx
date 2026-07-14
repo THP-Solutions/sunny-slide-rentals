@@ -111,7 +111,7 @@ export default function FAQClient() {
             {t("We're happy to help. Text us or send an email and we'll get back to you quickly.", 'Estamos felices de ayudar. Escríbenos o envía un email y te responderemos rápidamente.')}
           </p>
           <div className="flex flex-wrap justify-center gap-3">
-            <a href="sms:+12392204067" className="bg-[#f5a623] hover:bg-[#e09610] text-white font-bold px-7 py-3 rounded-xl transition-colors">
+            <a href="sms:+12396349809" className="bg-[#f5a623] hover:bg-[#e09610] text-white font-bold px-7 py-3 rounded-xl transition-colors">
               📱 {t('Text Us', 'Escríbenos')}
             </a>
             <a href="mailto:booking@sunnysliderentals.com" className="border-2 border-white/40 text-white hover:bg-white/10 font-bold px-7 py-3 rounded-xl transition-colors">

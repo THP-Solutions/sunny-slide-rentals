@@ -187,7 +187,7 @@ export default function HomePage() {
               "Serving all of Southwest Florida within a 20-mile radius. Not sure if we reach you?",
               "Servimos todo el suroeste de Florida en un radio de 20 millas. ¿No sabes si llegamos a ti?"
             )}{' '}
-            <a href="sms:+12392204067" className="text-[#1a6fa8] font-bold hover:underline">
+            <a href="sms:+12396349809" className="text-[#1a6fa8] font-bold hover:underline">
               {t('Text us!', '¡Escríbenos!')}
             </a>
           </p>
@@ -223,7 +223,7 @@ export default function HomePage() {
             <Link href="/rentals" className="bg-[#f5a623] hover:bg-[#e09610] text-white font-black px-12 py-5 rounded-2xl text-xl transition-all shadow-2xl hover:scale-105">
               📅 {t('Book Online Now', 'Reservar en Línea Ahora')}
             </Link>
-            <a href="sms:+12392204067" className="border-2 border-white/30 text-white hover:bg-white/10 font-bold px-10 py-5 rounded-2xl text-xl transition-all">
+            <a href="sms:+12396349809" className="border-2 border-white/30 text-white hover:bg-white/10 font-bold px-10 py-5 rounded-2xl text-xl transition-all">
               📱 {t('Text Us', 'Escríbenos')}
             </a>
           </div>

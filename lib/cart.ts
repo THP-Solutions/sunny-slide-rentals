@@ -14,7 +14,7 @@ export function calcAddonsTotal(sel: BookingSelection): number {
   return (
     sel.addonTables * 10 +
     sel.addonChairs * 3 +
-    sel.addonTent * 59 +
+    sel.addonTent * 259 +
     sel.addonGenerator * 75
   )
 }

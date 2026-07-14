@@ -41,7 +41,7 @@ export default function ServiceAreasPage() {
             )}
           </p>
           <div className="flex flex-wrap justify-center gap-3">
-            <a href="sms:+12392204067" className="bg-[#f5a623] hover:bg-[#e09610] text-white font-black px-6 py-3 rounded-xl transition-all hover:scale-105 shadow-xl">
+            <a href="sms:+12396349809" className="bg-[#f5a623] hover:bg-[#e09610] text-white font-black px-6 py-3 rounded-xl transition-all hover:scale-105 shadow-xl">
               📱 {t('Text to Check Your Address', 'Escribe para Verificar Tu Dirección')}
             </a>
             <Link href="/rentals" className="bg-white/10 backdrop-blur border border-white/20 text-white hover:bg-white/20 font-bold px-6 py-3 rounded-xl transition-all">
@@ -105,8 +105,8 @@ export default function ServiceAreasPage() {
             <p className="text-white/70 mb-6 text-lg">
               {t("Just text us your address — we'll reply within minutes!", '¡Solo escríbenos tu dirección — respondemos en minutos!')}
             </p>
-            <a href="sms:+12392204067" className="inline-block bg-[#f5a623] hover:bg-[#e09610] text-white font-black px-8 py-4 rounded-2xl text-lg transition-all hover:scale-105 shadow-xl">
-              📱 {t('Text (239) 220-4067', 'Mensaje al (239) 220-4067')}
+            <a href="sms:+12396349809" className="inline-block bg-[#f5a623] hover:bg-[#e09610] text-white font-black px-8 py-4 rounded-2xl text-lg transition-all hover:scale-105 shadow-xl">
+              📱 {t('Text (239) 634-9809', 'Mensaje al (239) 634-9809')}
             </a>
           </div>
         </div>

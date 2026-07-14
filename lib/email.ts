@@ -94,7 +94,7 @@ export async function sendBookingConfirmation(params: BookingEmailParams) {
 
           <p style="color:#6b7280;font-size:14px;">Questions? Text or email us anytime:</p>
           <p>
-            📱 <a href="sms:+12392204067" style="color:#1a6fa8;">(239) 220-4067</a><br/>
+            📱 <a href="sms:+12396349809" style="color:#1a6fa8;">(239) 634-9809</a><br/>
             ✉️ <a href="mailto:booking@sunnysliderentals.com" style="color:#1a6fa8;">booking@sunnysliderentals.com</a>
           </p>
           <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;"/>

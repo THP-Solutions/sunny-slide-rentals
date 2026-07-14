@@ -30,8 +30,8 @@ export default function ContactPage() {
                 <p className="text-gray-400 text-sm">{t('Usually within minutes', 'Generalmente en minutos')}</p>
               </div>
             </div>
-            <a href="sms:+12392204067" className="block w-full text-center bg-[#f5a623] hover:bg-[#e09610] text-white font-bold py-3 rounded-xl transition-colors">
-              {t('Text (239) 220-4067', 'Mensaje al (239) 220-4067')}
+            <a href="sms:+12396349809" className="block w-full text-center bg-[#f5a623] hover:bg-[#e09610] text-white font-bold py-3 rounded-xl transition-colors">
+              {t('Text (239) 634-9809', 'Mensaje al (239) 634-9809')}
             </a>
           </div>
 
