@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     const fuelCharge = addonFuelCharge ? 39.99 : 0
     const bundleCharge = partyBundle > 0 ? Number(partyBundle) : 0
     const addonsTotal =
-      addonTables * 10 + addonChairs * 3 + addonTent * 59 + addonGenerator * 75 + fuelCharge + bundleCharge
+      addonTables * 10 + addonChairs * 3 + addonTent * 259 + addonGenerator * 75 + fuelCharge + bundleCharge
     const totalAmount = rental.price + addonsTotal
 
     // Payment amount: full or 25% deposit (min $100)
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     const addonLines = [
       addonTables  > 0 ? `${addonTables}× 8ft Table${addonTables > 1 ? 's' : ''} (+$${addonTables * 10})` : '',
       addonChairs  > 0 ? `${addonChairs}× Chair${addonChairs > 1 ? 's' : ''} (+$${addonChairs * 3})` : '',
-      addonTent    > 0 ? '1× 16×32 Frame Tent (+$59)' : '',
+      addonTent    > 0 ? '1× 16×32 Frame Tent (+$259)' : '',
       partyBundle  > 0 ? `${partyBundleName} (+$${partyBundle})` : '',
       addonGenerator > 0 ? '1× Generator (+$75)' : '',
       addonFuelCharge   ? 'Fuel Charge (+$39.99)' : '',

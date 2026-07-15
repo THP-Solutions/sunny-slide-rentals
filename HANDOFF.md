@@ -1,298 +1,185 @@
 # Sunny Slide Rentals — Developer Handoff
 
-**Date:** June 25, 2026  
-**Stack:** Next.js 14 App Router · TypeScript · Tailwind CSS · Stripe · Supabase · Resend · GoHighLevel
+**Last updated:** 2026-07-14  
+**Repo:** https://github.com/THP-Solutions/sunny-slide-rentals  
+**Live site:** https://sunnysliderentals.com  
+**Stack:** Next.js 14 App Router · TypeScript · Tailwind CSS · Supabase · Stripe · Vercel  
 
 ---
 
-## 1. LIVE STATUS
+## 🔴 BLOCKING ISSUES (live site broken)
 
-| Item | Status |
+### 1. Availability check returns 500
+**Symptom:** `/api/availability` returns 500 → "Could not check — try again"  
+**Cause:** `SUPABASE_SERVICE_ROLE_KEY` not set in Vercel (falls back to placeholder string)  
+**Fix:** Vercel Dashboard → Project → Settings → Environment Variables → Add:
+- Key: `SUPABASE_SERVICE_ROLE_KEY`
+- Value: copy from Supabase Dashboard → Settings → API → `service_role` (secret key)
+- Redeploy after adding.
+
+### 2. Stripe webhooks failing (67 failures since June 25)
+**Symptom:** Orders may not be confirmed after payment  
+**Cause:** `STRIPE_WEBHOOK_SECRET` in Vercel doesn't match live endpoint signing secret  
+**Fix:** Stripe Dashboard → Developers → Webhooks → click the endpoint → copy "Signing secret" (starts with `whsec_`) → update `STRIPE_WEBHOOK_SECRET` in Vercel → Redeploy.
+
+### 3. AI Chatbot not responding
+**Cause:** `ANTHROPIC_API_KEY` not set in Vercel  
+**Fix:** Add `ANTHROPIC_API_KEY` to Vercel env vars (get from console.anthropic.com)
+
+### 4. Party package images broken (400 error)
+**Cause:** `public/images/party-tent.jpeg` does not exist  
+**Fix:** Save either of the white party tent photos Kyle sent to `public/images/party-tent.jpeg`, then `git add -A && git commit -m "add party tent image" && git push`
+
+---
+
+## ✅ COMPLETED THIS SESSION
+
+| What | Detail |
 |------|--------|
-| Domain | sunnysliderentals.com → Vercel |
-| GHL API | WORKING confirmed |
-| GHL Location ID | gFXKSvk8RdfoOYbhnUJa |
-| Stripe | Live keys active |
-| Chatbot lead flow | Full flow working |
-| Contact form GHL | Wired |
-| Resend emails | Active |
-| Fuel charge auto-apply | Fixed |
-| Pay in Full amount | Fixed |
-| Address autofill dropdown | Fixed |
+| Tiki Tsunami hidden | `hidden: true` in lib/rentals.ts — removed from browse grids |
+| Freedom's Fury added | id: `freedoms-fury`, $700, 25% deposit, images freedoms-fury-1.jpeg → 6.jpeg |
+| Gamefly renamed | Formerly "Riptide Rush Dual Lane" → id: `gamefly`, name: Gamefly, $375 |
+| Rip Curl added | NEW unit, id: `rip-curl`, $350, dims 37'L×19'W×19'H, image: rip-curl.jpeg |
+| Tent add-on price | $59 → $259 (lib/rentals.ts + lib/cart.ts) |
+| Party pkg images | both point to `/images/party-tent.jpeg` (file still needs to be saved) |
+| Phone number | (239) 220-4067 → Kyle's (239) 634-9809 across ALL files |
+| Availability fix | Route now uses `createServiceClient()` (service role, bypasses Supabase RLS) |
+| RentalDetail.tsx | Added `if (!res.ok) { setAvailability('error'); return; }` check |
+| All changes pushed | Commit `ca91f1d` on main |
 
 ---
 
-## 2. ENVIRONMENT VARIABLES
+## 📋 STILL PENDING
 
-Set in both .env.local and Vercel → Settings → Environment Variables.
-
-```
-NEXT_PUBLIC_SUPABASE_URL=https://omstlbimsbpkvrmgkhte.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_51TkDh3...
-STRIPE_SECRET_KEY=sk_live_51TkDh3...
-STRIPE_WEBHOOK_SECRET=whsec_v7OKtq...
-
-RESEND_API_KEY=re_DzceWWWW...
-
-NEXT_PUBLIC_SITE_URL=https://sunnysliderentals.com
-
-GHL_API_KEY=pit-0535ed77-8342-45c5-bb72-13cb38f7e954
-GHL_LOCATION_ID=gFXKSvk8RdfoOYbhnUJa
-
-CONTACT_EMAIL=booking@sunnysliderentals.com
-```
-
-GHL_LOCATION_ID was the root cause of all GHL 403 errors. Sub-account PIT tokens MUST include locationId in every request body. Without it every call returns 403.
+- [ ] **Add 3 Vercel env vars** (see Blocking Issues above) + Redeploy
+- [ ] **Save party-tent.jpeg** to `public/images/` and push
+- [ ] **Gamefly image** — still using `riptide-rush-dual-lane.jpg` as placeholder. Get real Gamefly photo from Kyle, save as `public/images/gamefly.jpeg`, update `lib/rentals.ts` line ~93: `image: '/images/gamefly.jpeg'`
+- [ ] **10×30 tent as add-on** — Kyle mentioned it. Price TBD. Add to `ADDONS` array in `lib/rentals.ts` and `calcAddonsTotal()` in `lib/cart.ts`
+- [ ] **Freedom's Fury calendarId** — currently `''` (empty). Get the GHL calendar ID from Kyle and add it to lib/rentals.ts
+- [ ] **Rip Curl calendarId** — also empty `''`. Same as above.
+- [ ] **Test Stripe flow end-to-end** after fixing webhook secret
 
 ---
 
-## 3. FILE MAP
+## 🏗 ARCHITECTURE
 
 ```
 app/
-  page.tsx                    Homepage
-  layout.tsx                  Root layout: Navbar + ChatBot + Footer
-  rentals/[id]/
-    RentalDetail.tsx          LARGE FILE - booking UI, address, fuel, Stripe
-  contact/page.tsx            Contact page
-  booking-confirmed/page.tsx  Post-payment success
-  waiver/page.tsx             Digital waiver
+  page.tsx                    ← Homepage
+  rentals/
+    page.tsx                  ← Browse all rentals
+    RentalsClient.tsx         ← Client filter/grid
+    [id]/
+      page.tsx                ← SSR rental detail page
+      RentalDetail.tsx        ← Client booking form (large file, ~600+ lines)
   api/
-    checkout/route.ts         Stripe session creation
-    contact/route.ts          Contact form -> GHL + Resend email
-    chat-lead/route.ts        Chatbot lead -> GHL + conversation note
-    ghl-test/route.ts         Diagnostic endpoint
-    webhooks/stripe/route.ts  Stripe webhook
-
-components/
-  ChatBot.tsx                 LARGE FILE - chatbot + lead flow
-  ContactForm.tsx
-  Navbar.tsx
-  Footer.tsx
-  RentalRow.tsx               Netflix horizontal scroll row
+    availability/route.ts     ← GET /api/availability?rentalId=&date=  (uses service client)
+    checkout/route.ts         ← POST /api/checkout  (creates Stripe session)
+    chatbot/route.ts          ← POST /api/chatbot  (Claude Haiku AI chat)
+    chat-lead/route.ts        ← POST /api/chat-lead  (saves lead from chatbot)
+    webhooks/stripe/route.ts  ← POST stripe webhooks  (confirms bookings)
+    contact/route.ts          ← POST contact form
+  booking-confirmed/page.tsx  ← Post-payment confirmation page
+  contact/page.tsx
+  faq/FAQClient.tsx
+  service-areas/page.tsx
 
 lib/
-  rentals.ts                  All products + pricing
-  cart.ts                     Cart context
-  email.ts                    Resend helpers
-  supabase.ts                 Supabase client
+  rentals.ts     ← ALL rental data, ADDONS, PARTY_PACKAGES arrays
+  cart.ts        ← calcAddonsTotal(), calcTotal(), calcDeposit(), baseDeposit()
+  supabase.ts    ← createClient() (anon) + createServiceClient() (service role, server only)
+  email.ts       ← Email templates (uses Kyle's number)
+
+components/
+  ChatBot.tsx    ← AI chatbot UI, parses LEAD_CAPTURED signal
+  Navbar.tsx
+  Footer.tsx
+
+public/images/   ← All rental photos live here
 ```
 
 ---
 
-## 4. CRITICAL: WRITING LARGE FILES
+## ⚠️ CRITICAL GOTCHAS
 
-The Windows-mounted filesystem truncates large files when using Write/Edit tools directly. For any file over 100 lines (RentalDetail.tsx, ChatBot.tsx, route files), always write via Python in bash:
+### File writes on Windows mount
+**NEVER use Write/Edit tools for files >100 lines** — the Windows-mounted filesystem truncates them silently.  
+**Always use:** `python3 -c "open('file','w').write(content)"` via Bash tool instead.
 
-```bash
-python3 - << 'PYEOF'
-content = r"""...file content..."""
-with open('/sessions/tender-cool-maxwell/mnt/sunny-slide-rentals/path/to/file.ts', 'w') as f:
-    f.write(content)
-PYEOF
-```
+### Supabase RLS
+Anon client (`createClient()`) is blocked by Row Level Security on the `bookings` table.  
+Server routes that read bookings MUST use `createServiceClient()` from `lib/supabase.ts`.  
+The `SUPABASE_SERVICE_ROLE_KEY` env var must be set in Vercel (not just locally).
 
-Bash path: C:\Users\rodri\Desktop\sunny-slide-rentals maps to /sessions/tender-cool-maxwell/mnt/sunny-slide-rentals/
-
----
-
-## 5. ALL BUGS FIXED THIS SESSION
-
-### Bug 1 - Pay in Full charged wrong amount
-Symptom: Party Package 3 (+$450) + Shark Attack ($575) = should be $1,025 but Stripe charged $575.
-Root cause: partyBundle arrived in the checkout body but was never added to addonsTotal.
-File: app/api/checkout/route.ts
-Fix:
-```
-const bundleCharge = partyBundle > 0 ? Number(partyBundle) : 0
-const addonsTotal = addonTables * 10 + addonChairs * 3 + addonTent * 59 +
-  addonGenerator * 75 + fuelCharge + bundleCharge
-```
-
-### Bug 2 - Fuel surcharge not auto-applying on paste
-Symptom: Pasting an address >20 miles away did not trigger the $39.99 fuel charge.
-Root cause: handleAddressBlur had if (distanceMiles === null) guard. On paste, distanceMiles was already set, so geocoding was skipped.
-File: app/rentals/[id]/RentalDetail.tsx
-Fix: Removed the null guard. Blur always re-geocodes when address >= 10 chars.
-
-### Bug 3 - Address suggestion dropdown not autofilling on click
-Symptom: Clicking a Nominatim suggestion closed the dropdown without filling the address field.
-Root cause: Browser event order - onBlur fires before onClick. The blur handler called setShowSuggestions(false) before the click registered, so click was lost.
-File: app/rentals/[id]/RentalDetail.tsx
-Fix: Changed from onClick to onMouseDown + e.preventDefault(). preventDefault stops blur from firing while mouse button is held.
-```
-onMouseDown={(e) => { e.preventDefault(); selectSuggestion(s); }}
-```
-
-### Bug 4 - Chatbot stored "yes" as the lead name
-Symptom: GHL contacts showed name = "yes".
-Root cause: "Let's do it!" button called handleLeadInput('yes'). Inside handleLeadInput, when leadStep === 'offered', first action was setLeadName(input) -- storing "yes".
-File: components/ChatBot.tsx
-Fix: Button now directly calls setLeadStep('askName') and pushes the name prompt. Never routes through handleLeadInput.
-IMPORTANT: Do not change this. The "Let's do it!" button must NOT call handleLeadInput.
-
-### Bug 5 - Phone number triggered age detection
-Symptom: Entering "(929) 399-3114" caused chatbot to respond with age handler instead of continuing lead flow. "14" in patterns matched "3114".
-File: components/ChatBot.tsx
-Fix: Age patterns changed to space-padded: ' 14 ', ' 5 ', ' 10 ' etc. Input is padded before matching:
-```
-const lower = ' ' + input.toLowerCase().trim() + ' '
-```
-
-### Bug 6 - Lead capture fired too early
-Symptom: "Before you go" prompt fired after only 2 exchanges, interrupting mid-conversation.
-Root cause: buyingIntent threshold was 2.
-File: components/ChatBot.tsx
-Fix: Threshold raised to 3 buying-intent messages before offer triggers.
-
-### Bug 7 - GHL 403: contacts and conversations not appearing
-Symptom: No contacts or conversations in GHL after chatbot or form submissions.
-Error: {"statusCode":403,"message":"The token does not have access to this location."}
-Root cause: Sub-account PIT token requires locationId in the request body for every API call. It was missing entirely. Without it GHL rejects every request even though the token is valid.
-Files: app/api/chat-lead/route.ts and app/api/contact/route.ts
-Fix: Both routes now read process.env.GHL_LOCATION_ID as envLocationId and include it in the contact creation body:
-```
-const envLocationId = process.env.GHL_LOCATION_ID
-// in request body:
-...(envLocationId ? { locationId: envLocationId } : {}),
-// locationId for conversation creation falls back:
-const locationId = contactData?.contact?.locationId ?? envLocationId
-```
-
-### Bug 8 - TypeScript duplicate variable error
-Symptom: Build error TS2451: Cannot redeclare block-scoped variable 'locationId'.
-Root cause: Added const locationId = process.env.GHL_LOCATION_ID on line 57 but const locationId = contactData?.contact?.locationId already existed on line 73 in the same function scope. Both files had this issue.
-Fix: Renamed the env var to envLocationId in both files. Contact-response variable stays locationId and falls back with ?? envLocationId.
-
-### Bug 9 - GHL diagnostic always returned NO_LOCATIONS
-Symptom: /api/ghl-test showed "status":"NO_LOCATIONS" even with correct credentials.
-Root cause: Test route called GET /locations/search?name=sunny which is an agency-level endpoint. A sub-account PIT cannot list locations. Returns empty array (not 403), making credentials look wrong when they were correct.
-File: app/api/ghl-test/route.ts
-Fix: Rewritten to call GET /locations/{locationId} directly (location-scoped). Also tests GET /contacts/?locationId=... to verify read access.
-Confirmed working:
-```
-{"status":"OK","location":{"id":"gFXKSvk8RdfoOYbhnUJa","name":"sunnysliderentals"},"contacts_check":"Can read contacts (3 returned)"}
-```
-
----
-
-## 6. GHL INTEGRATION ARCHITECTURE
-
-### Chatbot lead flow -> GHL
-1. User completes: event type -> group size -> name -> phone
-2. POST /api/chat-lead called with { name, phone, source }
-3. Creates GHL contact with locationId in body
-4. Creates GHL conversation (POST /conversations/)
-5. Adds activity note with full lead context
-
-### Contact form -> GHL + email
-1. User submits: name, email, phone, event date, city, interest, message
-2. POST /api/contact called
-3. Creates GHL contact with custom fields + locationId
-4. Creates GHL conversation + activity note
-5. Resend sends formatted email to booking@sunnysliderentals.com
-
-### Required API call pattern
-```typescript
-fetch('https://services.leadconnectorhq.com/contacts/', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer pit-0535ed77-8342-45c5-bb72-13cb38f7e954',
-    'Version': '2021-07-28',  // required header
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    firstName, lastName, phone,
-    locationId: 'gFXKSvk8RdfoOYbhnUJa',  // REQUIRED - without this: 403
-  })
-})
-```
-
-### Diagnostic
-GET https://sunnysliderentals.com/api/ghl-test -- verify credentials any time.
-
----
-
-## 7. CHATBOT LEAD FLOW STATES
-
-idle -> (3+ buying-intent exchanges) -> offered -> askName -> askPhone -> done
-
-- idle: Normal Q&A
-- offered: "Before you go..." prompt + "Let's do it!" button shown
-- askName: Waiting for name (text input visible)
-- askPhone: Waiting for phone
-- done: Submitted to GHL, confirmation shown
-
-The "Let's do it!" button sets leadStep('askName') directly -- does NOT call handleLeadInput. This is intentional (Bug 4 fix). Do not change.
-
----
-
-## 8. BUSINESS CONSTANTS (in RentalDetail.tsx)
-
-```typescript
-const BUSINESS_LAT = 26.5629    // Cape Coral, FL
-const BUSINESS_LNG = -81.9495
-const FUEL_CHARGE_MILES = 20    // $39.99 surcharge triggers beyond this
-```
-
----
-
-## 9. PRICING
-
-Add-ons:
-- Tables: $10/each
-- Chairs: $3/each
-- 16x32 Frame Tent: $59
-- Generator: $75
-- Fuel Surcharge: $39.99 (auto-applied when >20 miles from Cape Coral)
-
-Party Packages:
-- Package 1: $150
-- Package 2: $250
-- Package 3: $450
-
-Payment: 25% deposit (min $100) or Pay in Full.
-
----
-
-## 10. DUAL SMS NOTIFICATIONS
-
-Both owners notified on every booking and contact form:
-- Kyle: (239) 634-9809
-- Junior: (239) 220-4067
-
----
-
-## 11. PENDING TASKS
-
-### Domain (Task 22)
-If domain is managed in GHL, point DNS to Vercel:
-- A record @ -> 76.76.21.21
-- CNAME www -> cname.vercel-dns.com
-Then add domain in Vercel -> Project -> Settings -> Domains.
-
-### Push to GitHub (Task 26)
+### Git index.lock
+The sandbox shell can't delete `.git/index.lock`. When git commit fails in the sandbox, have the user run in PowerShell:
 ```powershell
-cd C:\Users\rodri\Desktop\sunny-slide-rentals
+Remove-Item "C:\Users\rodri\Desktop\sunny-slide-rentals\.git\index.lock" -Force -ErrorAction SilentlyContinue
 git add -A
-git commit -m "fix: GHL integration working, all bugs resolved"
-git push origin main
+git commit -m "message"
+git push
 ```
-If git lock error: Remove-Item .git\index.lock -Force
+
+### Large file edits in bash
+Bash path: `C:\Users\rodri\Desktop\sunny-slide-rentals` → `/sessions/tender-cool-maxwell/mnt/sunny-slide-rentals/`
 
 ---
 
-## 12. END OF SESSION - ALL VERIFIED WORKING
+## 🗄 SUPABASE
 
-- GHL API confirmed OK with correct location
-- GHL can read contacts (3 returned)
-- Chatbot: event -> size -> offer -> name -> phone -> confirmation
-- Stripe Pay in Full includes party bundle in total
-- Fuel surcharge auto-applies on paste when >20 miles
-- Address suggestions autofill on click
-- Lead name no longer stored as "yes"
-- Phone number no longer triggers age pattern
-- TypeScript builds clean
+- **Project URL:** `NEXT_PUBLIC_SUPABASE_URL` (already in Vercel)
+- **Anon key:** `NEXT_PUBLIC_SUPABASE_ANON_KEY` (already in Vercel)
+- **Service role key:** `SUPABASE_SERVICE_ROLE_KEY` ← **MISSING from Vercel** (root cause of 500)
+- **Table:** `bookings` — columns include `rental_id`, `event_date`, `status` ('confirmed'|'pending'|'cancelled')
+- RLS blocks anon reads. Service role bypasses RLS.
+
+---
+
+## 💳 STRIPE
+
+- Checkout session created in `app/api/checkout/route.ts`
+- Webhook handler in `app/api/webhooks/stripe/route.ts` — marks booking confirmed
+- `STRIPE_WEBHOOK_SECRET` in Vercel must match the signing secret for the live endpoint in Stripe Dashboard
+- Deposit logic: `Math.max(100, Math.ceil(totalAmount * 0.25))` — minimum $100
+
+---
+
+## 🤖 AI CHATBOT
+
+- Model: `claude-haiku-4-5-20251001` via `@anthropic-ai/sdk`
+- System prompt in `app/api/chatbot/route.ts` — references Kyle's number (239) 634-9809
+- Lead capture: AI appends `LEAD_CAPTURED:{"name":"...","phone":"..."}` to response
+- `components/ChatBot.tsx` parses this with regex, strips it from display, calls `/api/chat-lead`
+- Needs `ANTHROPIC_API_KEY` in Vercel to work
+
+---
+
+## 📋 RENTAL PRICING (current)
+
+| Unit | Price | Deposit |
+|------|-------|---------|
+| Freedom's Fury | $700 | $175 |
+| Shark Attack Splash | $500 | $125 |
+| Yeti's Peak | $400 | $100 |
+| Gamefly (formerly Riptide Rush) | $375 | $94 |
+| Rip Curl (new unit) | $350 | $88 |
+| Baja Blast Hybrid | $350 | $88 |
+| Cayman's Crush | $350 | $88 |
+| Palm Paradise Combo | $325 | $82 |
+| Akua Falls Dual Lane | $250 | $63 |
+| Goombay Splash Combo | $225 | $57 |
+| Tent+Tables+Chairs Package | $325 | $82 |
+| Big Day Party Package | $550 | $138 |
+
+**Hidden (not shown in browse):** Tiki Tsunami ($650), Generator ($75)
+
+**Add-ons:** Tables $10ea · Chairs $3ea · 16×32 Frame Tent $259 flat · Generator $75 flat
+
+---
+
+## 📞 CONTACT
+
+- **Main number (Kyle):** (239) 634-9809  
+- **SMS link format:** `tel:+12396349809` / `sms:+12396349809`  
+- **Email:** Updated in lib/email.ts, app/contact/page.tsx, etc.
+

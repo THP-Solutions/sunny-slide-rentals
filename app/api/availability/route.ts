@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
-
+import { getRentalById } from '@/lib/rentals'
+import { checkGhlAvailability } from '@/lib/ghl'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,12 +14,24 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing rentalId or date' }, { status: 400 })
   }
 
-  // Validate date format (YYYY-MM-DD)
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     return NextResponse.json({ error: 'Invalid date format' }, { status: 400 })
   }
 
-  // Check if there is already a confirmed or pending booking for this rental+date
+  const rental = getRentalById(rentalId)
+
+  // --- Primary: GHL calendar (if calendarId is set) ---
+  if (rental?.calendarId) {
+    try {
+      const available = await checkGhlAvailability(rental.calendarId, date)
+      return NextResponse.json({ available, source: 'ghl' })
+    } catch (err) {
+      console.warn('GHL availability check failed, falling back to Supabase:', err)
+      // Fall through to Supabase
+    }
+  }
+
+  // --- Fallback: Supabase bookings table ---
   const supabase = createServiceClient()
   const { count, error } = await supabase
     .from('bookings')
@@ -28,9 +41,9 @@ export async function GET(req: NextRequest) {
     .in('status', ['confirmed', 'pending'])
 
   if (error) {
-    console.error('Availability check error:', error)
+    console.error('Supabase availability check error:', error)
     return NextResponse.json({ error: 'Database error' }, { status: 500 })
   }
 
-  return NextResponse.json({ available: (count ?? 0) === 0 })
+  return NextResponse.json({ available: (count ?? 0) === 0, source: 'supabase' })
 }
