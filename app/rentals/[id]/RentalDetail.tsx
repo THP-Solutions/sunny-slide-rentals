@@ -330,17 +330,26 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                   {rental.name}
                 </h1>
                 <p className="text-3xl font-bold text-[#1a6fa8]">
-                  ${rental.price}
-                  <span className="text-base font-normal text-gray-400 ml-1">/ day</span>
+                  {rental.priceLabel ?? `$${rental.price}`}
+                  {!rental.priceLabel && <span className="text-base font-normal text-gray-400 ml-1">/ day</span>}
                 </p>
               </div>
 
-              <div className="bg-[#f5a623]/10 border border-[#f5a623]/40 rounded-xl p-4">
-                <p className="text-sm font-bold text-[#0d2340]">
-                  🎯 Reserve with a 25% deposit —{' '}
-                  <span className="text-[#f5a623] text-base">${staticDeposit} to book today</span>
-                </p>
-              </div>
+              {rental.price > 0 && (
+                <div className="bg-[#f5a623]/10 border border-[#f5a623]/40 rounded-xl p-4">
+                  <p className="text-sm font-bold text-[#0d2340]">
+                    🎯 Reserve with a 25% deposit —{' '}
+                    <span className="text-[#f5a623] text-base">${staticDeposit} to book today</span>
+                  </p>
+                </div>
+              )}
+              {rental.price === 0 && (
+                <div className="bg-[#f5a623]/10 border border-[#f5a623]/40 rounded-xl p-4">
+                  <p className="text-sm font-bold text-[#0d2340]">
+                    🎯 Select quantities below — <span className="text-[#f5a623] text-base">$100 minimum deposit</span>
+                  </p>
+                </div>
+              )}
 
               <div className="flex flex-wrap gap-2">
                 <span className="inline-flex items-center gap-1.5 bg-blue-50 text-[#1a6fa8] text-sm font-medium px-3 py-1.5 rounded-full border border-blue-100">
@@ -402,14 +411,45 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                   </span>
                 )}
               </div>
+              {/* Add-on cards */}
               <div className="space-y-3">
                 {ADDONS.map((addon) => {
+                  const addonImages: Record<string, string> = {
+                    tables: '/images/tables.jpeg',
+                    chairs: '/images/chair.jpg',
+                    tent: '/images/party-tent-1.jpg',
+                    generator: '/images/generator.jpg',
+                  };
                   const qty = quantities[addon.id] ?? 0;
+                  const imgSrc = addonImages[addon.id];
+                  const isStackable = addon.id === 'chairs' || addon.id === 'tables';
                   return (
                     <div
                       key={addon.id}
                       className="flex items-center gap-3 p-4 rounded-xl border border-gray-100 hover:border-blue-100 bg-gray-50 hover:bg-blue-50/20 transition-colors"
                     >
+                      {/* Add-on image — fan/stacked for chairs & tables */}
+                      {imgSrc && (
+                        <div className="flex-shrink-0 relative w-[68px] h-16">
+                          {isStackable ? (
+                            <>
+                              <div className="absolute inset-0 rounded-lg overflow-hidden" style={{ transform: 'rotate(-8deg) translate(-6px,3px)', opacity: 0.45 }}>
+                                <Image src={imgSrc} alt="" fill className="object-cover" sizes="68px" />
+                              </div>
+                              <div className="absolute inset-0 rounded-lg overflow-hidden" style={{ transform: 'rotate(-3deg) translate(-3px,1px)', opacity: 0.7 }}>
+                                <Image src={imgSrc} alt="" fill className="object-cover" sizes="68px" />
+                              </div>
+                              <div className="absolute inset-0 rounded-lg overflow-hidden">
+                                <Image src={imgSrc} alt={addon.name} fill className="object-cover" sizes="68px" />
+                              </div>
+                            </>
+                          ) : (
+                            <div className="absolute inset-0 rounded-xl overflow-hidden border border-gray-100">
+                              <Image src={imgSrc} alt={addon.name} fill className="object-cover" sizes="68px" />
+                            </div>
+                          )}
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-[#0d2340] text-sm">{addon.name}</p>
                         <p className="text-[#1a6fa8] font-bold text-sm">
@@ -639,10 +679,12 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                     <p className="font-bold text-[#0d2340] text-sm">Order Summary</p>
                   </div>
                   <div className="px-5 py-4 space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">{rental.name}</span>
-                      <span className="font-semibold text-[#0d2340]">${rental.price}</span>
-                    </div>
+                    {rental.price > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">{rental.name}</span>
+                        <span className="font-semibold text-[#0d2340]">${rental.price}</span>
+                      </div>
+                    )}
                     {addonsTotal > 0 && (
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Add-ons</span>
@@ -847,16 +889,21 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
             {[
-              { icon: '🪑', label: 'White Folding Chairs', price: '$3 each', sub: 'Up to 100 chairs' },
-              { icon: '🍽️', label: '8ft Folding Tables', price: '$10 each', sub: 'Up to 20 tables' },
-              { icon: '⛺', label: '16×32 Frame Tent', price: '$259 flat', sub: 'Shade for up to 50 guests' },
-              { icon: '⚡', label: 'Generator Rental', price: '$75 flat', sub: 'Recommended for 20ft+ slides' },
+              { img: '/images/chair.jpg',         label: 'White Folding Chairs', price: '$3 each',    sub: 'Up to 100 chairs' },
+              { img: '/images/tables.jpeg',        label: '8ft Folding Tables',   price: '$10 each',   sub: 'Up to 20 tables' },
+              { img: '/images/party-tent-1.jpg',   label: '16×32 Frame Tent',    price: '$259 flat',  sub: 'Shade for 50 guests' },
+              { img: '/images/generator.jpg',      label: 'Generator Rental',    price: '$75 flat',   sub: 'For 20ft+ slides' },
             ].map((item) => (
-              <div key={item.label} className="bg-white/10 border border-white/20 rounded-xl p-3 text-center hover:bg-white/20 transition-colors">
-                <div className="text-2xl mb-1">{item.icon}</div>
-                <p className="font-bold text-xs leading-snug">{item.label}</p>
-                <p className="text-[#f5a623] font-extrabold text-sm mt-1">{item.price}</p>
-                <p className="text-white/50 text-xs mt-0.5">{item.sub}</p>
+              <div key={item.label} className="bg-white/10 border border-white/20 rounded-xl overflow-hidden hover:bg-white/20 transition-colors">
+                <div className="relative h-28 overflow-hidden">
+                  <Image src={item.img} alt={item.label} fill className="object-cover opacity-90" sizes="200px" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                  <p className="absolute bottom-1.5 left-2 right-2 text-white font-bold text-xs leading-tight drop-shadow">{item.label}</p>
+                </div>
+                <div className="p-2.5 text-center">
+                  <p className="text-[#f5a623] font-extrabold text-sm">{item.price}</p>
+                  <p className="text-white/50 text-xs mt-0.5">{item.sub}</p>
+                </div>
               </div>
             ))}
           </div>

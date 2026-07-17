@@ -108,9 +108,11 @@ export default function RentalRow({ title, emoji, rentals }: Props) {
                 <div className="p-4 flex items-center justify-between">
                   <div>
                     <p className="text-[#1a6fa8] font-black text-2xl leading-none">
-                      ${rental.price}
+                      {rental.priceLabel ?? `$${rental.price}`}
                     </p>
-                    <p className="text-gray-400 text-xs mt-0.5">${dep} deposit · 9 hrs</p>
+                    <p className="text-gray-400 text-xs mt-0.5">
+                      {rental.price === 0 ? '$100 min deposit · 9 hrs' : `$${dep} deposit · 9 hrs`}
+                    </p>
                   </div>
                   <span className="bg-[#0d2340] group-hover/card:bg-[#f5a623] text-white text-sm font-black px-4 py-2.5 rounded-xl transition-colors duration-200">
                     Book Now →

@@ -34,9 +34,11 @@ const SERVICE_AREAS = ['Cape Coral','Lehigh Acres','Fort Myers','North Fort Myer
 export default function HomePage() {
   const { t } = useLanguage();
 
-  const waterSlides = RENTALS.filter((r) => !r.hidden && r.category === 'Water Slides');
-  const comboUnits  = RENTALS.filter((r) => !r.hidden && r.category === 'Combo Units');
-  const packages    = RENTALS.filter((r) => !r.hidden && r.category === 'Party Packages');
+  const waterSlides   = RENTALS.filter((r) => !r.hidden && r.category === 'Water Slides');
+  const comboUnits    = RENTALS.filter((r) => !r.hidden && r.category === 'Combo Units');
+  const packages      = RENTALS.filter((r) => !r.hidden && r.category === 'Party Packages');
+  const tents         = RENTALS.filter((r) => !r.hidden && r.category === 'Tents');
+  const tablesChairs  = RENTALS.filter((r) => !r.hidden && r.category === 'Tables & Chairs');
 
   const tickerItems = t(
     TICKER_ITEMS_EN.join('|||'),
@@ -76,6 +78,8 @@ export default function HomePage() {
         <RentalRow title={t('Water Slides', 'Toboganes de Agua')} emoji="💦" rentals={waterSlides} />
         <RentalRow title={t('Combo Units', 'Unidades Combo')} emoji="🎉" rentals={comboUnits} />
         {packages.length > 0 && <RentalRow title={t('Party Packages', 'Paquetes de Fiesta')} emoji="🎪" rentals={packages} />}
+        {tents.length > 0 && <RentalRow title={t('Tents', 'Carpas')} emoji="⛺" rentals={tents} />}
+        {tablesChairs.length > 0 && <RentalRow title={t('Tables & Chairs', 'Mesas y Sillas')} emoji="🪑" rentals={tablesChairs} />}
         <div className="text-center mt-4 pb-8">
           <Link href="/rentals" className="inline-flex items-center gap-2 bg-[#0d2340] hover:bg-[#1a6fa8] text-white font-black px-8 py-4 rounded-2xl text-base transition-all shadow-lg hover:scale-105">
             {t('View All Rentals', 'Ver Todas las Rentas')} →

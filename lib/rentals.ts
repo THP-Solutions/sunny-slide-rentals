@@ -10,7 +10,8 @@ export interface Rental {
   description: string;
   image: string;
   calendarId: string;
-  hidden?: boolean; // if true, exclude from browse grids
+  hidden?: boolean;       // if true, exclude from browse grids
+  priceLabel?: string;    // override price display (e.g. "$10/table · $3/chair")
 }
 
 export interface Addon {
@@ -48,7 +49,7 @@ export const RENTALS: Rental[] = [
     rentalHours: 9,
     description:
       "The ultimate patriotic thrill ride! Freedom's Fury is a massive obstacle course combo featuring a towering water slide, long slip-n-slide run, and dual splash pools — dressed in red, white, and blue. Perfect for school events, large birthday parties, and corporate outings.",
-    image: '/images/freedoms-fury-1.jpeg',
+    image: '/images/freedom-fury.jpeg',
     calendarId: '',
   },
   {
@@ -188,7 +189,7 @@ export const RENTALS: Rental[] = [
     rentalHours: 9,
     description:
       "Everything you need for seating and shade. 16×32 tent, 8ft tables, and white folding chairs — delivered and set up.",
-    image: '/images/party-tent.jpeg',
+    image: '/images/party-tent-1.jpg',
     calendarId: '5ZfM2NUPUmL0SzV4LRyu',
   },
   {
@@ -202,7 +203,7 @@ export const RENTALS: Rental[] = [
     rentalHours: 9,
     description:
       "The ultimate party bundle! Choose any water slide or combo unit + 16×32 tent, 8ft tables, and white chairs. Everything delivered and set up — you just show up.",
-    image: '/images/party-tent.jpeg',
+    image: '/images/party-tent-1.jpg',
     calendarId: 'guQnUYVaBIibEtLzOphS',
   },
   {
@@ -216,9 +217,68 @@ export const RENTALS: Rental[] = [
     rentalHours: 9,
     description:
       "Reliable power for your inflatables when an outlet isn't within 100ft of the setup area. Add this during checkout if needed.",
-    image: '/images/baja-blast-hybrid.jpg',
+    image: '/images/generator.jpg',
     calendarId: 'guQnUYVaBIibEtLzOphS',
-    hidden: true, // No generator photo — available as checkout add-on
+    hidden: true, // available as checkout add-on — available as checkout add-on
+  },
+  // ── Standalone Tents ─────────────────────────────────────────────────────────
+  {
+    id: 'tent-10x20',
+    name: '10×20 Frame Tent',
+    price: 100,
+    deposit: 100,
+    category: 'Tents',
+    dimensions: "20' L × 10' W",
+    wetDry: 'N/A',
+    rentalHours: 9,
+    description:
+      "Perfect shade solution for smaller gatherings. Our 10×20 white frame tent provides coverage for up to 18 guests. Includes professional setup and takedown — you just enjoy the party.",
+    image: '/images/party-tent-2.jpg',
+    calendarId: '',
+  },
+  {
+    id: 'tent-10x30',
+    name: '10×30 Frame Tent',
+    price: 150,
+    deposit: 100,
+    category: 'Tents',
+    dimensions: "30' L × 10' W",
+    wetDry: 'N/A',
+    rentalHours: 9,
+    description:
+      "Ideal for medium-sized events and backyard parties. The 10×30 white frame tent covers up to 27 guests comfortably. Delivered, set up, and taken down by our crew.",
+    image: '/images/party-tent-1.jpg',
+    calendarId: '',
+  },
+  {
+    id: 'tent-16x32',
+    name: '16×32 Frame Tent',
+    price: 300,
+    deposit: 100,
+    category: 'Tents',
+    dimensions: "32' L × 16' W",
+    wetDry: 'N/A',
+    rentalHours: 9,
+    description:
+      "Our biggest tent — shade and shelter for up to 50 guests. The 16×32 white frame tent is perfect for large birthday parties, corporate events, and community gatherings. Professional setup included.",
+    image: '/images/party-tent-1.jpg',
+    calendarId: '5ZfM2NUPUmL0SzV4LRyu',
+  },
+  // ── Tables & Chairs ───────────────────────────────────────────────────────────
+  {
+    id: 'tables-chairs',
+    name: 'Tables & Chairs',
+    price: 0,
+    deposit: 100,
+    category: 'Tables & Chairs',
+    dimensions: 'Various',
+    wetDry: 'N/A',
+    rentalHours: 9,
+    description:
+      "Rent as many 8ft folding tables or white folding chairs as you need — no slide required. Perfect for outdoor parties, events, and gatherings. Tables $10 each · Chairs $3 each. Select quantities below.",
+    image: '/images/tables.jpeg',
+    calendarId: '',
+    priceLabel: '$10/table · $3/chair',
   },
 ];
 
@@ -227,6 +287,8 @@ export const CATEGORIES = [
   'Water Slides',
   'Combo Units',
   'Party Packages',
+  'Tents',
+  'Tables & Chairs',
 ];
 
 export const ADDONS: Addon[] = [

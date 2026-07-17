@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     siteName: 'Sunny Slide Rentals',
     images: [
       {
-        url: '/images/freedoms-fury-1.jpeg',
+        url: '/images/freedom-fury.jpeg',
         width: 1200,
         height: 630,
         alt: "Freedom's Fury — Sunny Slide Rentals",
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Sunny Slide Rentals | Water Slides & Party Rentals — SW Florida',
     description: 'Book water slides, combo units & party packages. Full delivery & setup included!',
-    images: ['/images/freedoms-fury-1.jpeg'],
+    images: ['/images/freedom-fury.jpeg'],
   },
 };
 
