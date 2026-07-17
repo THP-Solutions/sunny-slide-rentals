@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRef, useState, useCallback, useEffect } from 'react';
 import type { Rental } from '@/lib/rentals';
 import { ADDONS, PARTY_PACKAGES } from '@/lib/rentals';
-import { calcAddonsTotal, calcTotal, baseDeposit } from '@/lib/cart';
+import { calcAddonsTotal, calcTotal, calcTax, calcCardFee, baseDeposit } from '@/lib/cart';
 
 interface Props {
   rental: Rental;
@@ -218,11 +218,17 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
   const addonsTotal = calcAddonsTotal(selection);
   const baseTotal = calcTotal(selection);
   const fuelAmount = addonFuelCharge ? 39.99 : 0;
-  const totalAmount = baseTotal + fuelAmount + bundlePrice;
+  const subtotal = baseTotal + fuelAmount + bundlePrice;
+  const taxAmount = calcTax(subtotal);
+  const cardFeeAmount = calcCardFee(subtotal + taxAmount);
+  const totalAmount = subtotal + taxAmount + cardFeeAmount;
   const depositAmount = Math.max(100, Math.ceil(totalAmount * 0.25));
   const chargeAmount = paymentType === 'full' ? totalAmount : depositAmount;
   const staticDeposit = baseDeposit(rental.price);
   const isWet = rental.wetDry.toLowerCase().includes('wet');
+  // Generator recommendation for slides 22ft+ height (needs 2 blowers)
+  const heightFt = parseInt(rental.dimensions.match(/(\d+(?:\.\d+)?)'?\s*H/)?.[1] ?? '0', 10);
+  const recommendsGenerator = heightFt >= 22;
 
   const canCheckout = !!(eventDate && availability === 'available' && !isCheckingOut && waiverSigned);
 
@@ -267,6 +273,7 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
     { icon: '📦', label: "What's Included", value: 'Full delivery, professional setup, and tear-down' },
     { icon: '⚡', label: 'Power Required', value: 'Dedicated 15-amp outlet within 100ft of setup area' },
     ...(isWet ? [{ icon: '💧', label: 'Water Required', value: 'Garden hose reaching the setup area' }] : []),
+    ...(recommendsGenerator ? [{ icon: '🔌', label: 'Generator Recommended', value: 'This slide requires 2 blowers. To avoid tripping breakers, we strongly recommend adding a generator below.' }] : []),
   ];
 
   return (
@@ -376,7 +383,15 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                 <span className="w-7 h-7 rounded-full bg-[#1a6fa8] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">2</span>
                 <h2 className="text-xl font-bold text-[#0d2340]">Upgrade Your Party 🎉</h2>
               </div>
-              <p className="text-gray-400 text-sm mb-6 ml-10">Add tables, chairs, tent, or a generator.</p>
+              <p className="text-gray-400 text-sm mb-2 ml-10">Add tables, chairs, tent, or a generator.</p>
+              <div className="ml-10 mb-5 p-3 bg-[#f5a623]/10 border border-[#f5a623]/30 rounded-xl text-sm text-[#0d2340]">
+                ⭐ <strong>Most customers add tables &amp; chairs</strong> — make seating easy for your guests!
+                {recommendsGenerator && (
+                  <span className="block mt-1 text-orange-700 font-medium">
+                    ⚡ This slide needs 2 blowers — we recommend adding a <strong>Generator</strong> to avoid tripped breakers.
+                  </span>
+                )}
+              </div>
               <div className="space-y-3">
                 {ADDONS.map((addon) => {
                   const qty = quantities[addon.id] ?? 0;
@@ -631,10 +646,25 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                         <span className="font-semibold text-[#0d2340]">+$39.99</span>
                       </div>
                     )}
+                    {/* Tax & Fees */}
+                    <div className="border-t border-gray-100 pt-2 mt-1 space-y-1.5">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Subtotal</span>
+                        <span className="text-gray-700">${subtotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">FL Sales Tax (6.5%)</span>
+                        <span className="text-gray-700">+${taxAmount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Card Processing Fee (2.7%)</span>
+                        <span className="text-gray-700">+${cardFeeAmount.toFixed(2)}</span>
+                      </div>
+                    </div>
                     <div className="border-t border-gray-200 pt-3 mt-2">
-                      <div className="flex justify-between text-sm font-bold">
+                      <div className="flex justify-between font-bold">
                         <span className="text-[#0d2340]">Total</span>
-                        <span className="text-[#0d2340]">${totalAmount.toFixed(2).replace('.00', '')}</span>
+                        <span className="text-[#0d2340] text-lg">${totalAmount.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between mt-1.5">
                         <span className="text-sm text-gray-500">25% Deposit option</span>
@@ -642,7 +672,7 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                       </div>
                       <div className="flex justify-between mt-1">
                         <span className="text-sm text-gray-500">Pay in Full option</span>
-                        <span className="text-sm font-bold text-[#1a6fa8]">${totalAmount.toFixed(2).replace('.00', '')}</span>
+                        <span className="text-sm font-bold text-[#1a6fa8]">${totalAmount.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>

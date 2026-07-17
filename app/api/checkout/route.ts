@@ -40,7 +40,12 @@ export async function POST(req: NextRequest) {
     const bundleCharge = partyBundle > 0 ? Number(partyBundle) : 0
     const addonsTotal =
       addonTables * 10 + addonChairs * 3 + addonTent * 259 + addonGenerator * 75 + fuelCharge + bundleCharge
-    const totalAmount = rental.price + addonsTotal
+    const subtotal = rental.price + addonsTotal
+
+    // FL Sales Tax (6.5%) + Card Processing Fee (2.7%)
+    const taxAmount   = Math.round(subtotal * 0.065 * 100) / 100
+    const cardFeeAmt  = Math.round((subtotal + taxAmount) * 0.027 * 100) / 100
+    const totalAmount = Math.round((subtotal + taxAmount + cardFeeAmt) * 100) / 100
 
     // Payment amount: full or 25% deposit (min $100)
     const depositAmount = Math.max(100, Math.ceil(totalAmount * 0.25))
@@ -54,7 +59,7 @@ export async function POST(req: NextRequest) {
     const addonLines = [
       addonTables  > 0 ? `${addonTables}× 8ft Table${addonTables > 1 ? 's' : ''} (+$${addonTables * 10})` : '',
       addonChairs  > 0 ? `${addonChairs}× Chair${addonChairs > 1 ? 's' : ''} (+$${addonChairs * 3})` : '',
-      addonTent    > 0 ? '1× 16×32 Frame Tent (+$259)' : '',
+      addonTent    > 0 ? `1× 16×32 Frame Tent (+$${addonTent * 259})` : '',
       partyBundle  > 0 ? `${partyBundleName} (+$${partyBundle})` : '',
       addonGenerator > 0 ? '1× Generator (+$75)' : '',
       addonFuelCharge   ? 'Fuel Charge (+$39.99)' : '',
@@ -63,9 +68,10 @@ export async function POST(req: NextRequest) {
     const description = [
       `Event date: ${formattedDate}`,
       addonLines && `Add-ons: ${addonLines}`,
+      `Subtotal: $${subtotal} | FL Tax (6.5%): $${taxAmount} | Card Fee (2.7%): $${cardFeeAmt}`,
       isFullPayment
         ? `Total: $${totalAmount} | PAID IN FULL`
-        : `Total: $${totalAmount} | Deposit: $${depositAmount} | Balance due day-of: $${totalAmount - depositAmount}`,
+        : `Total: $${totalAmount} | Deposit: $${depositAmount} | Balance due day-of: $${(totalAmount - depositAmount).toFixed(2)}`,
     ].filter(Boolean).join(' · ')
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'

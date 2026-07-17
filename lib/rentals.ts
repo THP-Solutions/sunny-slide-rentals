@@ -90,7 +90,7 @@ export const RENTALS: Rental[] = [
     rentalHours: 9,
     description:
       "Get in the game! The Gamefly is a thrilling dual-lane water slide featuring a steep drop and a competitive race to the splash pool. Perfect for head-to-head challenges at any event.",
-    image: '/images/riptide-rush-dual-lane.jpg',
+    image: '/images/gamefly.jpeg',
     calendarId: 'UvJuHUWYvhA7NxF9smrV',
   },
   {
