@@ -138,8 +138,8 @@ export const RENTALS: Rental[] = [
   {
     id: 'palm-paradise-combo',
     name: 'Palm Paradise Combo',
-    price: 325,
-    deposit: 82,
+    price: 225,
+    deposit: 57,
     category: 'Combo Units',
     dimensions: "28' L × 15' W × 14' H",
     wetDry: 'Wet/Dry',

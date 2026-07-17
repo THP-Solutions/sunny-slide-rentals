@@ -93,11 +93,13 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
       return;
     }
     try {
+      // Bias toward Florida / SW Florida area
       const url =
         `https://nominatim.openstreetmap.org/search?` +
-        `q=${encodeURIComponent(query)}&format=json&countrycodes=us&limit=5&addressdetails=0&extratags=0`;
+        `q=${encodeURIComponent(query + ', Florida')}&format=json&countrycodes=us&limit=5&addressdetails=0&extratags=0` +
+        `&viewbox=-87.6,24.5,-80.0,31.0&bounded=0`;
       const res = await fetch(url, {
-        headers: { 'Accept-Language': 'en-US,en' },
+        headers: { 'Accept-Language': 'en-US,en', 'User-Agent': 'SunnySlidRentals/1.0' },
       });
       const data: NominatimResult[] = await res.json();
       setSuggestions(data);
@@ -141,12 +143,17 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
   // Geocode address whenever field loses focus (handles typing, pasting, autocomplete)
   const handleAddressBlur = async () => {
     setShowSuggestions(false);
-    if (eventAddress.length >= 10) {
+    if (eventAddress.length >= 5) {
       try {
+        // Try with Florida bias first
+        const query = eventAddress.toLowerCase().includes('fl') || eventAddress.toLowerCase().includes('florida')
+          ? eventAddress
+          : eventAddress + ', Florida';
         const url =
           `https://nominatim.openstreetmap.org/search?` +
-          `q=${encodeURIComponent(eventAddress)}&format=json&countrycodes=us&limit=1&addressdetails=0&extratags=0`;
-        const res = await fetch(url, { headers: { 'Accept-Language': 'en-US,en' } });
+          `q=${encodeURIComponent(query)}&format=json&countrycodes=us&limit=1&addressdetails=0&extratags=0` +
+          `&viewbox=-87.6,24.5,-80.0,31.0&bounded=0`;
+        const res = await fetch(url, { headers: { 'Accept-Language': 'en-US,en', 'User-Agent': 'SunnySlideRentals/1.0' } });
         const data: NominatimResult[] = await res.json();
         if (data.length > 0) {
           const lat = parseFloat(data[0].lat);
@@ -162,9 +169,12 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
               setFuelAutoApplied(false);
             }
           }
+        } else {
+          // Couldn't geocode — set -1 to show manual fallback message
+          setDistanceMiles(-1);
         }
       } catch {
-        // silent fail — user can still manually toggle fuel charge if needed
+        setDistanceMiles(-1);
       }
     }
   };
@@ -228,7 +238,7 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
   const isWet = rental.wetDry.toLowerCase().includes('wet');
   // Generator recommendation for slides 22ft+ height (needs 2 blowers)
   const heightFt = parseInt(rental.dimensions.match(/(\d+(?:\.\d+)?)'?\s*H/)?.[1] ?? '0', 10);
-  const recommendsGenerator = heightFt >= 22;
+  const recommendsGenerator = heightFt >= 20;
 
   const canCheckout = !!(eventDate && availability === 'available' && !isCheckingOut && waiverSigned);
 
@@ -593,12 +603,17 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-[#0d2340] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1a6fa8] focus:border-transparent transition"
                   />
                   <p className="text-xs text-gray-400 mt-1.5">We'll confirm delivery logistics before your event.</p>
-                  {distanceMiles !== null && (
+                  {distanceMiles !== null && distanceMiles >= 0 && (
                     <p className={`text-xs font-semibold mt-1 ${distanceMiles > FUEL_CHARGE_MILES ? 'text-orange-600' : 'text-green-600'}`}>
                       📍 ~{distanceMiles} miles from our base
                       {distanceMiles > FUEL_CHARGE_MILES
                         ? ' — fuel charge automatically applied'
                         : ' — within free delivery zone ✓'}
+                    </p>
+                  )}
+                  {distanceMiles === -1 && (
+                    <p className="text-xs font-semibold mt-1 text-gray-500">
+                      📍 Couldn&apos;t detect distance — if you&apos;re more than 20 miles from Cape Coral, please add the ⛽ Fuel Charge below.
                     </p>
                   )}
                   {showSuggestions && suggestions.length > 0 && (
@@ -806,15 +821,58 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                       : 'Dedicated 15-amp outlet within 100ft of setup area required.'}
                   </p>
                 </div>
+                {recommendsGenerator && (
+                  <div className="p-3.5 bg-orange-50 border border-orange-300 rounded-xl">
+                    <p className="font-bold text-orange-800 text-xs mb-1">🔌 Generator Required</p>
+                    <p className="text-orange-700 text-xs leading-relaxed">
+                      This slide runs <strong>2 blowers</strong>. To avoid tripping breakers, we strongly recommend adding a generator. Add it in Step 2 above for just $75.
+                    </p>
+                  </div>
+                )}
               </div>
             </section>
           </div>
         </div>
 
+        {/* Add-on CTA Banner — always visible */}
+        <section className="bg-gradient-to-r from-[#0d2340] to-[#1a6fa8] rounded-2xl p-6 sm:p-8 text-white">
+          <h2 className="text-xl font-bold mb-2">🎪 Make It a Complete Party</h2>
+          <p className="text-white/70 text-sm mb-5">
+            Most customers add seating &amp; shade to their rental — it makes the whole event easier for guests.
+            {recommendsGenerator && (
+              <span className="block mt-1 font-semibold text-yellow-300">
+                ⚡ This slide runs 2 blowers. A generator is strongly recommended to avoid tripped breakers.
+              </span>
+            )}
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+            {[
+              { icon: '🪑', label: 'White Folding Chairs', price: '$3 each', sub: 'Up to 100 chairs' },
+              { icon: '🍽️', label: '8ft Folding Tables', price: '$10 each', sub: 'Up to 20 tables' },
+              { icon: '⛺', label: '16×32 Frame Tent', price: '$259 flat', sub: 'Shade for up to 50 guests' },
+              { icon: '⚡', label: 'Generator Rental', price: '$75 flat', sub: 'Recommended for 20ft+ slides' },
+            ].map((item) => (
+              <div key={item.label} className="bg-white/10 border border-white/20 rounded-xl p-3 text-center hover:bg-white/20 transition-colors">
+                <div className="text-2xl mb-1">{item.icon}</div>
+                <p className="font-bold text-xs leading-snug">{item.label}</p>
+                <p className="text-[#f5a623] font-extrabold text-sm mt-1">{item.price}</p>
+                <p className="text-white/50 text-xs mt-0.5">{item.sub}</p>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={scrollToBooking}
+            className="bg-[#f5a623] hover:bg-[#e09610] text-white font-extrabold py-3 px-6 rounded-xl transition-colors shadow-lg"
+          >
+            ➕ Add These to My Order →
+          </button>
+        </section>
+
         {/* Related Rentals */}
         {relatedRentals.length > 0 && (
           <section className="bg-white rounded-2xl shadow-sm p-6 sm:p-8">
-            <h2 className="text-xl font-bold text-[#0d2340] mb-6">Frequently Rented Together</h2>
+            <h2 className="text-xl font-bold text-[#0d2340] mb-2">Frequently Rented Together</h2>
+            <p className="text-gray-400 text-sm mb-6">Customers who booked this unit also rented these:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {relatedRentals.map((r) => (
                 <div
