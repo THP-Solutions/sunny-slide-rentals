@@ -67,7 +67,7 @@ export default function EventDateCapture({ onDateSelected }: Props) {
             {t("When's your party?", '¿Cuándo es tu fiesta?')}
           </h2>
           <p className="text-white/50 text-sm mt-1">
-            {t('Pick a date — see exactly what's open for you.', 'Elige una fecha — mira exactamente qué está disponible.')}
+            {t("Pick a date — see exactly what's open for you.", 'Elige una fecha — mira exactamente qué está disponible.')}
           </p>
         </div>
 
