@@ -11,7 +11,8 @@ export interface Rental {
   image: string;
   calendarId: string;
   hidden?: boolean;       // if true, exclude from browse grids
-  priceLabel?: string;    // override price display (e.g. "$10/table · $3/chair")
+  priceLabel?: string;    // override price display
+  inventory?: number;     // total units available (default 3) (e.g. "$10/table · $3/chair")
 }
 
 export interface Addon {
@@ -189,7 +190,7 @@ export const RENTALS: Rental[] = [
     rentalHours: 9,
     description:
       "Everything you need for seating and shade. 16×32 tent, 8ft tables, and white folding chairs — delivered and set up.",
-    image: '/images/party-tent-1.jpg',
+    image: '/images/tent-daytime.jpg',
     calendarId: '5ZfM2NUPUmL0SzV4LRyu',
   },
   {
@@ -203,7 +204,7 @@ export const RENTALS: Rental[] = [
     rentalHours: 9,
     description:
       "The ultimate party bundle! Choose any water slide or combo unit + 16×32 tent, 8ft tables, and white chairs. Everything delivered and set up — you just show up.",
-    image: '/images/party-tent-1.jpg',
+    image: '/images/tent-daytime.jpg',
     calendarId: 'guQnUYVaBIibEtLzOphS',
   },
   {
@@ -233,7 +234,7 @@ export const RENTALS: Rental[] = [
     rentalHours: 9,
     description:
       "Perfect shade solution for smaller gatherings. Our 10×20 white frame tent provides coverage for up to 18 guests. Includes professional setup and takedown — you just enjoy the party.",
-    image: '/images/party-tent-2.jpg',
+    image: '/images/tent-daytime.jpg',
     calendarId: '',
   },
   {
@@ -247,7 +248,7 @@ export const RENTALS: Rental[] = [
     rentalHours: 9,
     description:
       "Ideal for medium-sized events and backyard parties. The 10×30 white frame tent covers up to 27 guests comfortably. Delivered, set up, and taken down by our crew.",
-    image: '/images/party-tent-1.jpg',
+    image: '/images/tent-daytime.jpg',
     calendarId: '',
   },
   {
@@ -261,7 +262,7 @@ export const RENTALS: Rental[] = [
     rentalHours: 9,
     description:
       "Our biggest tent — shade and shelter for up to 50 guests. The 16×32 white frame tent is perfect for large birthday parties, corporate events, and community gatherings. Professional setup included.",
-    image: '/images/party-tent-1.jpg',
+    image: '/images/tent-evening.jpg',
     calendarId: '5ZfM2NUPUmL0SzV4LRyu',
   },
   // ── Tables & Chairs ───────────────────────────────────────────────────────────

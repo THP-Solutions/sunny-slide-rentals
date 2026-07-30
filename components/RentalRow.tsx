@@ -5,14 +5,16 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { Rental } from '@/lib/rentals';
 import { baseDeposit } from '@/lib/cart';
+import { getAvailable, INVENTORY } from '@/lib/inventory';
 
 interface Props {
   title: string;
   emoji: string;
   rentals: Rental[];
+  eventDate?: Date | null;
 }
 
-export default function RentalRow({ title, emoji, rentals }: Props) {
+export default function RentalRow({ title, emoji, rentals, eventDate }: Props) {
   const rowRef = useRef<HTMLDivElement>(null);
 
   const scroll = (direction: 'left' | 'right') => {
@@ -61,6 +63,10 @@ export default function RentalRow({ title, emoji, rentals }: Props) {
             const heightPart = rental.dimensions.includes('×')
               ? rental.dimensions.split('×')[2]?.trim().replace(' H', '')
               : null;
+            // Inventory availability
+            const avail = eventDate ? getAvailable(rental.id, eventDate) : INVENTORY;
+            const availBadgeColor = avail === 0 ? 'bg-red-500' : avail === 1 ? 'bg-orange-500' : avail === 2 ? 'bg-yellow-500' : 'bg-green-500';
+            const availText = avail === 0 ? 'Booked' : avail === 1 ? '1 left!' : avail === 2 ? '2 left' : '3 open';
 
             return (
               <Link
@@ -81,9 +87,13 @@ export default function RentalRow({ title, emoji, rentals }: Props) {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
                   {/* Category / wet-dry badge */}
-                  <div className="absolute top-3 left-3">
+                  <div className="absolute top-3 left-3 flex flex-col gap-1.5">
                     <span className="bg-[#f5a623] text-white text-xs font-black px-3 py-1 rounded-full shadow-lg uppercase tracking-wide">
                       {rental.wetDry === 'N/A' ? rental.category : rental.wetDry}
+                    </span>
+                    {/* Inventory badge */}
+                    <span className={`${availBadgeColor} text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow-md`}>
+                      {eventDate ? `📅 ${availText}` : `⚡ ${INVENTORY} available`}
                     </span>
                   </div>
 

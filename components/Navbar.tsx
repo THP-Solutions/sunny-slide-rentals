@@ -6,6 +6,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 const NAV_EN = [
   { href: '/rentals', en: 'Rentals', es: 'Rentas' },
+  { href: '/availability', en: 'Availability', es: 'Disponibilidad' },
   { href: '/gallery', en: 'Gallery', es: 'Galería' },
   { href: '/service-areas', en: 'Service Areas', es: 'Áreas de Servicio' },
   { href: '/reviews', en: 'Reviews', es: 'Reseñas' },
