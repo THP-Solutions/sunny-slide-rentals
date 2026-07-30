@@ -5,6 +5,7 @@ import { RENTALS } from '@/lib/rentals';
 import RentalRow from '@/components/RentalRow';
 import HeroChannels from '@/components/HeroChannels';
 import EventDateCapture from '@/components/EventDateCapture';
+import AvailabilityCalendarEmbed from '@/components/AvailabilityCalendarEmbed';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const TICKER_ITEMS_EN = ['💦 Water Slides','🎉 Combo Units','🏠 Bounce Houses','📍 Cape Coral','📍 Lehigh Acres','📍 Fort Myers','⭐ 5-Star Rated','🚚 Free Delivery & Setup','🛡️ Licensed & Insured'];
@@ -92,6 +93,9 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+
+      {/* EMBEDDED AVAILABILITY CALENDAR */}
+      <AvailabilityCalendarEmbed />
 
       {/* REVIEWS */}
       <section className="py-20 bg-gradient-to-br from-[#0d2340] to-[#1a4f7a] px-4 overflow-hidden relative">
