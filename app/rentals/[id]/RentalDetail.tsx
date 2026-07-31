@@ -305,12 +305,12 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
         <section className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-2">
             {/* Hero Image */}
-            <div className="relative h-80 sm:h-[520px] lg:h-auto lg:min-h-[620px]">
+            <div className="relative h-80 sm:h-[520px] lg:h-auto lg:min-h-[620px] bg-[#0d2340]">
               <Image
                 src={rental.image}
                 alt={rental.name}
                 fill
-                className="object-cover object-center"
+                className="object-contain"
                 priority
               />
               <div className="absolute top-4 left-4 flex gap-2">

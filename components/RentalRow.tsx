@@ -75,7 +75,7 @@ export default function RentalRow({ title, emoji, rentals, eventDate }: Props) {
                 className="flex-shrink-0 w-80 bg-white rounded-3xl shadow-sm hover:shadow-2xl transition-all duration-300 overflow-hidden hover:-translate-y-2 group/card"
               >
                 {/* Image */}
-                <div className="relative h-64 overflow-hidden bg-sky-50">
+                <div className="relative h-64 overflow-hidden bg-[#0d2340]">
                   <Image
                     src={rental.image}
                     alt={rental.name}

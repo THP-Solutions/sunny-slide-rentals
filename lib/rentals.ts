@@ -190,7 +190,7 @@ export const RENTALS: Rental[] = [
     rentalHours: 9,
     description:
       "Everything you need for seating and shade. 16×32 tent, 8ft tables, and white folding chairs — delivered and set up.",
-    image: '/images/tent-daytime.jpg',
+    image: '/images/tent-evening.jpg',
     calendarId: '5ZfM2NUPUmL0SzV4LRyu',
   },
   {
@@ -204,7 +204,7 @@ export const RENTALS: Rental[] = [
     rentalHours: 9,
     description:
       "The ultimate party bundle! Choose any water slide or combo unit + 16×32 tent, 8ft tables, and white chairs. Everything delivered and set up — you just show up.",
-    image: '/images/tent-daytime.jpg',
+    image: '/images/tent-evening.jpg',
     calendarId: 'guQnUYVaBIibEtLzOphS',
   },
   {
@@ -234,7 +234,7 @@ export const RENTALS: Rental[] = [
     rentalHours: 9,
     description:
       "Perfect shade solution for smaller gatherings. Our 10×20 white frame tent provides coverage for up to 18 guests. Includes professional setup and takedown — you just enjoy the party.",
-    image: '/images/tent-daytime.jpg',
+    image: '/images/tent-evening.jpg',
     calendarId: '',
   },
   {
@@ -248,7 +248,7 @@ export const RENTALS: Rental[] = [
     rentalHours: 9,
     description:
       "Ideal for medium-sized events and backyard parties. The 10×30 white frame tent covers up to 27 guests comfortably. Delivered, set up, and taken down by our crew.",
-    image: '/images/tent-daytime.jpg',
+    image: '/images/tent-evening.jpg',
     calendarId: '',
   },
   {
