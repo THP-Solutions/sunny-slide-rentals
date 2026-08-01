@@ -417,7 +417,7 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
                   const addonImages: Record<string, string> = {
                     tables: '/images/tables.jpeg',
                     chairs: '/images/chair.jpg',
-                    tent: '/images/party-tent-1.jpg',
+                    tent: '/images/tent-evening.jpg',
                     generator: '/images/generator.jpg',
                   };
                   const qty = quantities[addon.id] ?? 0;
@@ -891,7 +891,7 @@ export default function RentalDetail({ rental, relatedRentals }: Props) {
             {[
               { img: '/images/chair.jpg',         label: 'White Folding Chairs', price: '$3 each',    sub: 'Up to 100 chairs' },
               { img: '/images/tables.jpeg',        label: '8ft Folding Tables',   price: '$10 each',   sub: 'Up to 20 tables' },
-              { img: '/images/party-tent-1.jpg',   label: '16×32 Frame Tent',    price: '$259 flat',  sub: 'Shade for 50 guests' },
+              { img: '/images/tent-evening.jpg',   label: '16×32 Frame Tent',    price: '$259 flat',  sub: 'Shade for 50 guests' },
               { img: '/images/generator.jpg',      label: 'Generator Rental',    price: '$75 flat',   sub: 'For 20ft+ slides' },
             ].map((item) => (
               <div key={item.label} className="bg-white/10 border border-white/20 rounded-xl overflow-hidden hover:bg-white/20 transition-colors">

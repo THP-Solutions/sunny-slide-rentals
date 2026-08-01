@@ -234,7 +234,7 @@ export const RENTALS: Rental[] = [
     rentalHours: 9,
     description:
       "Perfect shade solution for smaller gatherings. Our 10×20 white frame tent provides coverage for up to 18 guests. Includes professional setup and takedown — you just enjoy the party.",
-    image: '/images/tent-evening.jpg',
+    image: '/images/tent-daytime.jpg',
     calendarId: '',
   },
   {
@@ -248,7 +248,7 @@ export const RENTALS: Rental[] = [
     rentalHours: 9,
     description:
       "Ideal for medium-sized events and backyard parties. The 10×30 white frame tent covers up to 27 guests comfortably. Delivered, set up, and taken down by our crew.",
-    image: '/images/tent-evening.jpg',
+    image: '/images/tent-daytime.jpg',
     calendarId: '',
   },
   {
